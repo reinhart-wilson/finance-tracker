@@ -1,0 +1,22 @@
+import '../../../domain/models/transaction/transaction.dart';
+
+extension TransactionToMap on Transaction {
+  Map<String, dynamic> toMap() => { 
+    'id': id, 
+    'title': title, 
+    'amount': amount, 
+    'date': date.toIso8601String(),
+    'due_date': dueDate?.toIso8601String(),
+  };
+}
+
+extension TransactionFromMap on Map<String, dynamic> {
+  Transaction fromMap() => Transaction(
+    id: this['id'], 
+    title: this["title"], 
+    amount: this['amount'], 
+    date: DateTime.parse(this['date']),
+    dueDate: this['due_date'] != null ? DateTime.parse(this['due_date']) : null,
+    accountId: this['account_id'] 
+  );
+}
