@@ -12,48 +12,56 @@ class AccountListViewmodel extends ChangeNotifier {
   final AccountRepository _repository;
   List<Account> _accountList = [];
   bool Function(Account)? _filterCallback;
-  bool isLoading = false;
+  bool _isLoading = false;
 
   /// Getter
   List<Account> get accountList => _accountList.filtered(_filterCallback);
+  bool get isLoading => _isLoading;
 
   /// Setter
   set filter(filterCallback) {
     _filterCallback = filterCallback;
-    notifyListeners();
   }
 
   /// Loads account, called on viewmodel init.
   Future<void> _loadAccounts() async {
+    _isLoading = true;
+    notifyListeners();
     _accountList = await _repository.getAllAccounts();
+    _accountList.sort((a, b) => a.name.compareTo(b.name));
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<void> insertAccount(Account account) async {
     try {
-      isLoading = true;
+      _isLoading = true;
 
+      notifyListeners();
       int id = await _repository.addAccount(account);
       final newAccount = account.copyWith(id: id);
       _accountList.add(newAccount);
       _accountList.sort((a, b) => a.name.compareTo(b.name));
+      
+      notifyListeners();
     } catch (e) {
       rethrow;
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
   }
 
   Future<void> deleteAccount(int accountId) async {
     try {
-      isLoading = true;
+      _isLoading = true;
+      notifyListeners();
       await _repository.deleteAccount(accountId);
       _accountList.removeWhere((account) => account.id == accountId);
-      notifyListeners();
     } catch (e) {
       rethrow;
     } finally {
-      isLoading = false;
+      _isLoading = false;
       notifyListeners();
     }
   }
