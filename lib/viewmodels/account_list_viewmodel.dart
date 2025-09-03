@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AccountListViewmodel extends ChangeNotifier {
-  AccountListViewmodel(this._repository) {
+  AccountListViewmodel({required repository}) :_repository = repository {
     _loadAccounts();
   }
 
