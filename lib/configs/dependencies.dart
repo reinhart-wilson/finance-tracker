@@ -1,30 +1,42 @@
-import 'package:finance_tracker/repositories/account_repository.dart';
-import 'package:finance_tracker/repositories/transaction_category_repository.dart';
-import 'package:finance_tracker/repositories/transaction_repository.dart';
-import 'package:finance_tracker/viewmodels/account_list_viewmodel.dart';
-import 'package:path/path.dart';
+import 'package:finance_tracker/repositories/repositories.dart';
+import 'package:finance_tracker/services/local_data_service.dart';
+import 'package:finance_tracker/viewmodels/view_models.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
-import 'package:finance_tracker/services/local_data_service.dart';
-import 'package:finance_tracker/repositories/account_repository.dart';
 
 List<SingleChildWidget> buildProviders() {
-  final LocalDataService localDataService = LocalDataService();
+  final localDataService = LocalDataService();
 
   return [
-    // Repositories
+    // Repos
     Provider<AccountRepository>(
-        create: (_) => AccountRepository(localDataService: localDataService)),
-    Provider<TransactionRepository>(
-        create: (_) =>
-            TransactionRepository(localDataService: localDataService)),
+      create: (_) => AccountRepository(localDataService: localDataService),
+    ),
     Provider<TransactionCategoryRepository>(
-        create: (_) =>
-            TransactionCategoryRepository(localDataService: localDataService)),
+      create: (_) =>
+          TransactionCategoryRepository(localDataService: localDataService),
+    ),
+    Provider<TransactionRepository>(
+      create: (_) => TransactionRepository(localDataService: localDataService),
+    ),
 
-    // ViewModels
+    //VMs
+    ChangeNotifierProvider<AccountDetailViewmodel>(
+      create: (context) => AccountDetailViewmodel(
+          accountRepository: context.read<AccountRepository>(),
+          transactionRepository: context.read<TransactionRepository>()),
+    ),
     ChangeNotifierProvider<AccountListViewmodel>(
-        create: (context) =>
-            AccountListViewmodel(repository: context.read<AccountRepository>()))
+        create: (context) => AccountListViewmodel(
+            repository: context.read<AccountRepository>())),
+    ChangeNotifierProvider<TransactionFormViewmodel>(
+        create: (context) => TransactionFormViewmodel(
+            transactionRepository: context.read<TransactionRepository>(),
+            accountRepository: context.read<AccountRepository>(),
+            categoryRepository: context.read<TransactionCategoryRepository>())),
+    ChangeNotifierProvider<TransactionListViewmodel>(
+        create: (context) => TransactionListViewmodel(
+            txRepository: context.read<TransactionRepository>(),
+            accountRepository: context.read<AccountRepository>())),
   ];
 }
