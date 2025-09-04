@@ -41,7 +41,7 @@ class LocalDataService {
         CREATE TABLE transaction_categories(
           id INTEGER PRIMARY KEY,
           name TEXT NOT NULL,
-          type TEXT NOT NULL,
+          icon TEXT,
           color TEXT,
           default_account_id INTEGER
         );
@@ -57,7 +57,7 @@ class LocalDataService {
           due_date TEXT ,
           settled_date TEXT,
           account_id INTEGER NOT NULL,
-          transaction_type_id INTEGER NOT NULL
+          transaction_category_id INTEGER 
         );
       ''');
       },
@@ -68,32 +68,119 @@ class LocalDataService {
   // Transaction-Related methods
   // ===========================================================================
 
-  Future<double> getTransactionSum({
+  Future<double> getSettledTransactionSum({
     int? accountId,
     DateTime? startDate,
     DateTime? endDate,
+    String? transactionType, // 'credit', 'debit', atau null
+    int? categoryId,
+  }) async {
+    final db = await database;
+
+    // Base query
+    String sql = 'SELECT SUM(amount) AS total FROM transactions t';
+    List<String> conditions = [];
+    List<dynamic> args = [];
+
+    // Hanya ambil transaksi yang sudah settled
+    if (startDate != null && endDate != null) {
+      conditions.add('t.settled_date BETWEEN ? AND ?');
+      args.addAll([startDate.toIso8601String(), endDate.toIso8601String()]);
+    } else if (startDate != null) {
+      conditions.add('t.settled_date >= ?');
+      args.add(startDate.toIso8601String());
+    } else if (endDate != null) {
+      conditions.add('t.settled_date <= ?');
+      args.add(endDate.toIso8601String());
+    } else {
+      conditions.add('t.settled_date IS NOT NULL');
+    }
+
+    // Filter account id (bisa termasuk sub-accounts)
+    if (accountId != null) {
+      final accountIds = await _getAccountIdsIncludingChildren(accountId);
+      if (accountIds.isNotEmpty) {
+        final placeholders = List.filled(accountIds.length, '?').join(',');
+        conditions.add('t.account_id IN ($placeholders)');
+        args.addAll(accountIds);
+      }
+    }
+
+    // Filter jenis transaksi
+    if (transactionType != null && transactionType.isNotEmpty) {
+      if (transactionType == 'debit') {
+        conditions.add('t.amount > 0');
+      } else if (transactionType == 'credit') {
+        conditions.add('t.amount < 0');
+      }
+    }
+
+    // Filter kategori
+    if (categoryId != null) {
+      conditions.add('t.transaction_category_id = ?');
+      args.add(categoryId);
+    }
+
+    // Build final SQL
+    if (conditions.isNotEmpty) {
+      sql += ' WHERE ${conditions.join(' AND ')}';
+    }
+
+    // Execute query
+    final result = await db.rawQuery(sql, args);
+
+    // Return hasil total (default 0 kalau null)
+    return ((result.first['total'] ?? 0) as num).toDouble();
+  }
+
+  Future<double> getUnsettledTransactionSum({
+    int? accountId,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? transactionType, // 'debit', 'credit', atau null
+    int? categoryId,
   }) async {
     final db = await database;
 
     // Start building the SQL and parameters
-    String sql = 'SELECT SUM(amount) AS total FROM transactions';
+    String sql = 'SELECT SUM(amount) AS total FROM transactions t';
     List<String> conditions = [];
     List<dynamic> args = [];
 
-    // Add conditions dynamically
+    // Filter account
     if (accountId != null) {
-      conditions.add('account_id = ?');
+      conditions.add('t.account_id = ?');
       args.add(accountId);
     }
 
+    // Hanya transaksi belum settle
+    conditions.add('t.settled_date IS NULL');
+
+    // Filter tanggal
     if (startDate != null) {
-      conditions.add('date >= ?');
+      conditions.add('t.due_date >= ?');
       args.add(startDate.toIso8601String());
     }
 
     if (endDate != null) {
-      conditions.add('date <= ?');
+      conditions.add('t.due_date <= ?');
       args.add(endDate.toIso8601String());
+    }
+
+    // Filter transaction type
+    if (transactionType != null && transactionType.isNotEmpty) {
+      if (transactionType == 'debit') {
+        conditions.add('t.amount < 0');
+      } else if (transactionType == 'credit') {
+        conditions.add('t.amount > 0');
+      }
+      // kalau null atau 'both', tidak ditambah filter
+    }
+
+    // Filter category
+    if (categoryId != null) {
+      conditions.add('t.transaction_category_id = ?');
+      args.add(categoryId);
     }
 
     // Append WHERE clause if needed
@@ -150,9 +237,8 @@ class LocalDataService {
     }
   }
 
-
   /// Inserts a transaction and updates account balances if settled
-  /// 
+  ///
   /// The [transaction] map must contain keys:
   /// - title [String]
   /// - amount [double] (positive for income, negative for expense)
@@ -160,9 +246,9 @@ class LocalDataService {
   /// - due_date [String?] (ISO 8601 format), nullable, for scheduled transactions
   /// - settled_date [String?] (ISO 8601 format), nullable, if the transaction is settled
   /// - account_id [int], the associated account ID
-  /// 
+  ///
   /// Transacation id is auto-generated.
-  /// 
+  ///
   /// Returns the inserted transaction's row ID in [int]
   Future<int> insertTransaction(Map<String, dynamic> transaction) async {
     final db = await database;
@@ -225,6 +311,8 @@ class LocalDataService {
     DateTime? startDate,
     DateTime? endDate,
     int? accountId,
+    String? transactionType, // 'credit', 'debit', atau null (semua)
+    int? categoryId,
   }) async {
     final db = await database;
 
@@ -235,44 +323,64 @@ class LocalDataService {
     }
 
     // Step 2: Bangun where clause
-    String? where;
+    String where = 't.settled_date IS NOT NULL';
     List<Object?> whereArgs = [];
 
     if (startDate != null && endDate != null) {
-      where = 'settled_date BETWEEN ? AND ?';
+      where = 't.settled_date BETWEEN ? AND ?';
       whereArgs.addAll([
         startDate.toIso8601String(),
         endDate.toIso8601String(),
       ]);
     } else if (startDate != null) {
-      where = ' settled_date >= ?';
+      where = 't.settled_date >= ?';
       whereArgs.add(startDate.toIso8601String());
     } else if (endDate != null) {
-      where = ' settled_date <= ?';
+      where = 't.settled_date <= ?';
       whereArgs.add(endDate.toIso8601String());
-    } else {
-      where = ' settled_date IS NOT NULL'; // hanya settled
     }
 
     if (accountIds != null && accountIds.isNotEmpty) {
       final placeholders = List.filled(accountIds.length, '?').join(',');
-      where = '$where AND account_id IN ($placeholders)';
+      where = '$where AND t.account_id IN ($placeholders)';
       whereArgs.addAll(accountIds);
     }
 
-    // Step 3: Query
-    return await db.query(
-      'transactions',
-      where: where,
-      whereArgs: whereArgs,
-      orderBy: 'date DESC',
-    );
+    if (transactionType != null && transactionType.isNotEmpty) {
+      if (transactionType == 'debit') {
+        where = '$where AND t.amount > 0';
+      } else if (transactionType == 'credit') {
+        where = '$where AND t.amount < 0';
+      }
+    }
+
+    if (categoryId != null) {
+      where = '$where AND t.transaction_category_id = ?';
+      whereArgs.add(categoryId);
+    }
+
+    // Step 3: Query dengan LEFT OUTER JOIN
+    final result = await db.rawQuery('''
+      SELECT 
+        t.*, 
+        c.name AS category_name, 
+        c.color AS category_color
+      FROM transactions t
+      LEFT OUTER JOIN transaction_categories c 
+        ON t.transaction_category_id = c.id
+      WHERE $where
+      ORDER BY t.date DESC
+  ''', whereArgs);
+
+    return result;
   }
 
   Future<List<Map<String, dynamic>>> fetchUnsettledTransactions({
     DateTime? startDate,
     DateTime? endDate,
     int? accountId,
+    String? transactionType, // 'credit', 'debit', atau null (semua)
+    int? categoryId,
   }) async {
     final db = await database;
 
@@ -283,36 +391,56 @@ class LocalDataService {
     }
 
     // Step 2: Bangun where clause
-    String where = 'due_date IS NOT NULL AND settled_date IS NULL'; // hanya due
+    String where = 't.due_date IS NOT NULL AND t.settled_date IS NULL';
     List<Object?> whereArgs = [];
 
     if (startDate != null && endDate != null) {
-      where += ' AND due_date BETWEEN ? AND ?';
+      where += ' AND t.due_date BETWEEN ? AND ?';
       whereArgs.addAll([
         startDate.toIso8601String(),
         endDate.toIso8601String(),
       ]);
     } else if (startDate != null) {
-      where += ' AND due_date >= ?';
+      where += ' AND t.due_date >= ?';
       whereArgs.add(startDate.toIso8601String());
     } else if (endDate != null) {
-      where += ' AND due_date <= ?';
+      where += ' AND t.due_date <= ?';
       whereArgs.add(endDate.toIso8601String());
     }
 
     if (accountIds != null && accountIds.isNotEmpty) {
       final placeholders = List.filled(accountIds.length, '?').join(',');
-      where += ' AND account_id IN ($placeholders)';
+      where += ' AND t.account_id IN ($placeholders)';
       whereArgs.addAll(accountIds);
     }
 
-    // Step 3: Query
-    return await db.query(
-      'transactions',
-      where: where,
-      whereArgs: whereArgs,
-      orderBy: 'due_date ASC',
-    );
+    if (transactionType != null && transactionType.isNotEmpty) {
+      if (transactionType == 'debit') {
+        where = '$where AND t.amount > 0';
+      } else if (transactionType == 'credit') {
+        where = '$where AND t.amount < 0';
+      }
+    }
+
+    if (categoryId != null) {
+      where = '$where AND t.transaction_category_id = ?';
+      whereArgs.add(categoryId);
+    }
+
+    // Step 3: Query dengan JOIN
+    final result = await db.rawQuery('''
+      SELECT 
+        t.*, 
+        c.name AS category_name, 
+        c.color AS category_color
+      FROM transactions t
+      LEFT OUTER JOIN transaction_categories c 
+        ON t.transaction_category_id = c.id
+      WHERE $where
+      ORDER BY t.due_date ASC
+  ''', whereArgs);
+
+    return result;
   }
 
   /// Helper to get account IDs including sub-accounts
@@ -340,9 +468,9 @@ class LocalDataService {
   /// - type [String] (e.g., 'income', 'expense')
   /// - color [String?] (nullable, hex color code)
   /// - default_account_id [int?] (nullable, default account to be deducted for this category)
-  /// 
+  ///
   /// Category id is auto-generated.
-  /// 
+  ///
   /// Returns the inserted category's row ID in [int]
   Future<int> insertTransactionCategory(Map<String, dynamic> category) async {
     final db = await database;
@@ -354,6 +482,30 @@ class LocalDataService {
     );
     if (response < 0) throw Exception("Failed to add category.");
     return response;
+  }
+
+  /// Deletes a transaction category, and updates the associated transactions'
+  /// category id to null
+  Future<void> deleteTransactionCategory(int categoryId) async {
+    final db = await database;
+
+    db.transaction((txn) async {
+      /// Step 1: Set category id from transaction table
+      await txn.update(
+        'transactions',
+        {'category_id': null}, // set null
+        where: 'category_id = ?',
+        whereArgs: [categoryId],
+      );
+
+      /// Step 2: Delete corresponding categories
+      final response = await txn.delete(
+        'transaction_categories',
+        where: 'id = ?',
+        whereArgs: [categoryId],
+      );
+      if (response < 0) throw Exception("Failed to delete transaction");
+    });
   }
 
   /// Fetches all transaction categories, sorted by name
@@ -384,14 +536,14 @@ class LocalDataService {
   // ===========================================================================
 
   /// Inserts an account
-  /// 
+  ///
   /// The [account] map must contain keys:
-  /// - name [String] 
+  /// - name [String]
   /// - balance [double] (initial balance)
   /// - parent_id [int?] (nullable, if it's a sub-account)
-  /// 
+  ///
   /// Account id is auto-generated.
-  /// 
+  ///
   /// Returns the inserted account's row ID in [int]
   Future<int> insertAccount(Map<String, dynamic> account) async {
     final db = await database;
@@ -412,7 +564,7 @@ class LocalDataService {
 
     db.transaction((txn) async {
       // Step 1: Update balances from both sub and main (if any) account
-      final amount = await getTransactionSum(accountId: accountId);
+      final amount = await getSettledTransactionSum(accountId: accountId);
       await _updateAccountBalances(txn, accountId, amount);
 
       /// Step 2: Delete transaction from transaction table
