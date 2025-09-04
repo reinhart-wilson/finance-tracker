@@ -9,6 +9,7 @@ extension TransactionToMap on Transaction {
     'date': date.toIso8601String(),
     'due_date': dueDate?.toIso8601String(),
     'transaction_category_id' : categoryId,
+    'category': category,
     'settled_date': settledDate
   };
 }
@@ -23,5 +24,6 @@ extension TransactionFromMap on Map<String, dynamic> {
     accountId: this['account_id'],
     settledDate: this['settled_date'],
     categoryId: this['transaction_category_id'],
+    category: this['category']
   );
 }

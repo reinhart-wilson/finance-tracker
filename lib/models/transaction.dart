@@ -4,6 +4,8 @@ class Transaction {
   final double amount;
   final int accountId;
   final DateTime date;
+  final String? category;
+  final int? categoryId;
   final DateTime? dueDate;
   final DateTime? settledDate;
 
@@ -13,6 +15,8 @@ class Transaction {
     required this.amount,
     required this.accountId,
     required this.date,
+    this.category,
+    this.categoryId,
     this.dueDate,
     this.settledDate,
   });
@@ -24,16 +28,16 @@ class Transaction {
     required double amount,
     required int accountId,
     required DateTime date,
+    String? category,
+    int? categoryId,
     DateTime? dueDate,
     DateTime? settledDate,
   }) {
     DateTime? finalSettledDate;
 
     if (dueDate == null) {
-      // aturan 1
       finalSettledDate = date;
     } else {
-      // aturan 2
       finalSettledDate = settledDate; // bisa null
     }
 
@@ -45,6 +49,8 @@ class Transaction {
       date: date,
       dueDate: dueDate,
       settledDate: finalSettledDate,
+      category: category,
+      categoryId: categoryId
     );
   }
 
@@ -61,7 +67,9 @@ class Transaction {
       accountId: accountId,
       date: date,
       dueDate: dueDate,
+      category: category,
       settledDate: settledDate,
+      categoryId: categoryId
     );
   }
 }
