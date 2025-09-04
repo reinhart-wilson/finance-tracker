@@ -5,8 +5,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AccountListViewmodel extends ChangeNotifier {
-  AccountListViewmodel({required repository}) :_repository = repository {
+  AccountListViewmodel({required AccountRepository repository})
+      : _repository = repository {
     _loadAccounts();
+    _repository.addListener(() {
+      _loadAccounts(); // atau refresh data
+    });
   }
 
   final AccountRepository _repository;
@@ -42,7 +46,7 @@ class AccountListViewmodel extends ChangeNotifier {
       final newAccount = account.copyWith(id: id);
       _accountList.add(newAccount);
       _accountList.sort((a, b) => a.name.compareTo(b.name));
-      
+
       notifyListeners();
     } catch (e) {
       rethrow;
