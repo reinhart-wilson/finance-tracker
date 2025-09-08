@@ -1,7 +1,8 @@
 import 'package:finance_tracker/models/account.dart';
-import 'package:finance_tracker/models/transaction.dart';
-import 'package:finance_tracker/models/transaction_category.dart';
+import 'package:finance_tracker/models/transaction/transaction.dart';
+import 'package:finance_tracker/models/transaction/transaction_category.dart';
 import 'package:finance_tracker/viewmodels/view_models.dart';
+import 'package:finance_tracker/views/widgets/transaction/category_form_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -9,6 +10,8 @@ import 'package:intl/intl.dart';
 enum TransactionType { income, expense }
 
 class TransactionFormView extends StatefulWidget {
+  const TransactionFormView({super.key});
+
   @override
   State<TransactionFormView> createState() => _TransactionFormViewState();
 }
@@ -20,12 +23,9 @@ class _TransactionFormViewState extends State<TransactionFormView> {
   void initState() {
     super.initState();
     _vm = context.read<TransactionFormViewmodel>();
-    _accounts = _vm.accountList;
   }
 
   late TransactionFormViewmodel _vm;
-  late List<Account> _accounts;
-  late List<TransactionCategory> _categories;
   final dateFormat = DateFormat('dd/MM/yyyy');
   TransactionCategory? _selectedCategory;
   Account? _selectedAccount;
@@ -74,71 +74,86 @@ class _TransactionFormViewState extends State<TransactionFormView> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    // TODO: tambah button untuk form kategori
-                    DropdownButtonFormField<TransactionCategory>(
-                      value: _selectedCategory,
-                      items: _categories
-                          .map((c) =>
-                              DropdownMenuItem(value: c, child: Text(c.name)))
-                          .toList(),
-                      onChanged: (newCategory) {
-                        setState(() {
-                          _selectedCategory = newCategory;
-
-                          // cek apakah kategori punya akun default
-                          final defaultAccId = newCategory!.defaultAccountId;
-                          if (defaultAccId != null) {
-                            _selectedAccount = _accounts
-                                .firstWhere((a) => a.id == defaultAccId);
-                          }
-                        });
-                      },
-                      decoration: const InputDecoration(labelText: "Category"),
-                    ),
-                    DropdownButtonFormField<Account>(
-                      value: _selectedAccount,
-                      items: [
-                        ..._accounts.map((account) {
-                          return DropdownMenuItem<Account>(
-                            value: account,
-                            child: Text(account.name),
+                    // TODO: tambah button untuk menambahkan kategori
+                    CategoryDropdown(
+                      selectedCategory: _selectedCategory,
+                      onChanged: (newCategory) async {
+                        if (newCategory == null) {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    CategoryFormWidget()), // TODO: Implement CategoryFormView();
                           );
-                        })
-                      ],
-                      onChanged: (Account? newValue) {
-                        setState(() {
-                          _selectedAccount = newValue;
-                        });
+                          if (result is TransactionCategory) {
+                            setState(() {
+                              _vm.categories.add(result);
+                              _selectedCategory = result;
+                            });
+                          }
+                        } else {
+                          setState(() {
+                            _selectedCategory = newCategory;
+                            final defaultAccId = newCategory.defaultAccountId;
+                            if (defaultAccId != null) {
+                              _selectedAccount = _vm.accountList
+                                  .firstWhere((a) => a.id == defaultAccId);
+                            }
+                          });
+                        }
                       },
-                      onSaved: (value) {
-                        _selectedAccount = value;
-                      },
-                      decoration: const InputDecoration(
-                        labelText: 'Akun',
+                    ),
+                    Selector<TransactionFormViewmodel, List<Account>>(
+                      selector: (_, vm) => vm.accountList,
+                      builder: (_, __, ___) => DropdownButtonFormField<Account>(
+                        value: _selectedAccount,
+                        items: [
+                          ..._vm.accountList.map((account) {
+                            return DropdownMenuItem<Account>(
+                              value: account,
+                              child: Text(account.name),
+                            );
+                          })
+                        ],
+                        onChanged: (Account? newValue) {
+                          setState(() {
+                            _selectedAccount = newValue;
+                          });
+                        },
+                        onSaved: (value) {
+                          _selectedAccount = value;
+                        },
+                        decoration: const InputDecoration(
+                          labelText: 'Akun',
+                        ),
                       ),
                     ),
                     Row(
                       children: [
-                        RadioListTile<TransactionType>(
-                          title: const Text("Penghasilan"),
-                          autofocus: true,
-                          value: TransactionType.income,
-                          groupValue: _type,
-                          onChanged: (value) {
-                            setState(() {
-                              _type = value;
-                            });
-                          },
+                        Expanded(
+                          child: RadioListTile<TransactionType>(
+                            title: const Text("Penghasilan"),
+                            autofocus: true,
+                            value: TransactionType.income,
+                            groupValue: _type,
+                            onChanged: (value) {
+                              setState(() {
+                                _type = value;
+                              });
+                            },
+                          ),
                         ),
-                        RadioListTile<TransactionType>(
-                          title: const Text("Pengeluaran"),
-                          value: TransactionType.expense,
-                          groupValue: _type,
-                          onChanged: (value) {
-                            setState(() {
-                              _type = value;
-                            });
-                          },
+                        Expanded(
+                          child: RadioListTile<TransactionType>(
+                            title: const Text("Pengeluaran"),
+                            value: TransactionType.expense,
+                            groupValue: _type,
+                            onChanged: (value) {
+                              setState(() {
+                                _type = value;
+                              });
+                            },
+                          ),
                         ),
                       ],
                     ),
@@ -165,12 +180,6 @@ class _TransactionFormViewState extends State<TransactionFormView> {
                     ),
                     TextFormField(
                       readOnly: true,
-                      validator: (_) {
-                        if (_selectedDueDate == null) {
-                          return "Tanggal tidak boleh kosong";
-                        }
-                        return null;
-                      },
                       controller: TextEditingController(
                         text:
                             "${_selectedTxDate.day}/${_selectedTxDate.month}/${_selectedTxDate.year}",
@@ -216,7 +225,7 @@ class _TransactionFormViewState extends State<TransactionFormView> {
                               : dateFormat.format(_selectedDueDate!),
                         ),
                         decoration: const InputDecoration(
-                          labelText: "Due Date",
+                          labelText: "Tanggal Jatuh Tempo",
                           suffixIcon: Icon(Icons.calendar_today),
                         ),
                         onTap: _pickDueDate,
@@ -243,19 +252,23 @@ class _TransactionFormViewState extends State<TransactionFormView> {
                           try {
                             await _vm.insertTransaction(Transaction(
                                 title: _title!,
-                                amount: _amount!,
+                                amount: _type == TransactionType.income
+                                    ? _amount!
+                                    : -_amount!,
                                 accountId: _selectedAccount!.id!,
                                 date: _selectedTxDate,
                                 dueDate: _selectedDueDate,
-                                settledDate: _hasDueDate? null : _selectedDueDate,
-                                categoryId: _selectedCategory!.id));
+                                settledDate:
+                                    _hasDueDate ? null : _selectedDueDate,
+                                categoryId: _selectedCategory?.id));
                             if (!mounted) return;
                             Navigator.pop(context);
                           } catch (e) {
                             if (!mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text('Gagal menyimpan akun')),
+                              SnackBar(
+                                  content:
+                                      Text('Gagal menyimpan transaksi: $e')),
                             );
                           }
                         }
@@ -264,5 +277,47 @@ class _TransactionFormViewState extends State<TransactionFormView> {
                     )
                   ],
                 ))));
+  }
+}
+
+class CategoryDropdown extends StatelessWidget {
+  final TransactionCategory? selectedCategory;
+  final void Function(TransactionCategory?) onChanged;
+
+  const CategoryDropdown({
+    super.key,
+    required this.selectedCategory,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<TransactionFormViewmodel, List<TransactionCategory>>(
+      selector: (_, vm) => vm.categories,
+      builder: (_, categories, ___) =>
+          DropdownButtonFormField<TransactionCategory?>(
+        value: selectedCategory,
+        items: [
+          ...categories.map(
+            (c) => DropdownMenuItem(
+              value: c,
+              child: Text(c.name),
+            ),
+          ),
+          const DropdownMenuItem<TransactionCategory?>(
+            value: null,
+            child: Row(
+              children: [
+                Icon(Icons.add, color: Colors.blue),
+                SizedBox(width: 8),
+                Text("Tambah"),
+              ],
+            ),
+          ),
+        ],
+        onChanged: onChanged,
+        decoration: const InputDecoration(labelText: "Kategori Transaksi"),
+      ),
+    );
   }
 }
