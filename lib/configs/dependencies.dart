@@ -1,6 +1,8 @@
 import 'package:finance_tracker/repositories/repositories.dart';
 import 'package:finance_tracker/services/local_data_service.dart';
+import 'package:finance_tracker/viewmodels/transaction/transaction_category_viewmodel.dart';
 import 'package:finance_tracker/viewmodels/view_models.dart';
+import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
@@ -9,14 +11,14 @@ List<SingleChildWidget> buildProviders() {
 
   return [
     // Repos
-    Provider<AccountRepository>(
+    ChangeNotifierProvider<AccountRepository>(
       create: (_) => AccountRepository(localDataService: localDataService),
     ),
-    Provider<TransactionCategoryRepository>(
+    ChangeNotifierProvider<TransactionCategoryRepository>(
       create: (_) =>
           TransactionCategoryRepository(localDataService: localDataService),
     ),
-    Provider<TransactionRepository>(
+    ChangeNotifierProvider<TransactionRepository>(
       create: (_) => TransactionRepository(localDataService: localDataService),
     ),
 
@@ -38,5 +40,9 @@ List<SingleChildWidget> buildProviders() {
         create: (context) => TransactionListViewmodel(
             txRepository: context.read<TransactionRepository>(),
             accountRepository: context.read<AccountRepository>())),
+    ChangeNotifierProvider<TransactionCategoryViewmodel>(
+        create: (context) => TransactionCategoryViewmodel(
+            accountRepository: context.read<AccountRepository>(),
+            categoryRepository: context.read<TransactionCategoryRepository>()))
   ];
 }
