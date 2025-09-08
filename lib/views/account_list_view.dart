@@ -1,7 +1,7 @@
 import 'package:finance_tracker/models/account.dart';
 import 'package:flutter/material.dart';
 import 'package:animated_tree_view/animated_tree_view.dart';
-import 'package:finance_tracker/viewmodels/account_list_viewmodel.dart';
+import 'package:finance_tracker/viewmodels/account/account_list_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:finance_tracker/views/widgets/account_form_widget.dart';
 

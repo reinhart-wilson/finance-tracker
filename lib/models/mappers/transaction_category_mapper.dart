@@ -1,4 +1,4 @@
-import 'package:finance_tracker/models/transaction_category.dart';
+import 'package:finance_tracker/models/transaction/transaction_category.dart';
 
 extension TransactionToMap on TransactionCategory {
   Map<String, dynamic> toMap() => { 

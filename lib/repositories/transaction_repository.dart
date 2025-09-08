@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:finance_tracker/models/transaction.dart';
+import 'package:finance_tracker/models/transaction/transaction.dart';
 import 'package:finance_tracker/services/local_data_service.dart';
 import 'package:finance_tracker/models/mappers/transaction_mapper.dart';
 import 'package:flutter/foundation.dart';

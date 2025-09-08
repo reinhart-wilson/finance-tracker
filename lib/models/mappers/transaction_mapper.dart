@@ -1,4 +1,4 @@
-import 'package:finance_tracker/models/transaction.dart';
+import 'package:finance_tracker/models/transaction/transaction.dart';
 
 extension TransactionToMap on Transaction {
   Map<String, dynamic> toMap() => { 
@@ -10,7 +10,7 @@ extension TransactionToMap on Transaction {
     'due_date': dueDate?.toIso8601String(),
     'transaction_category_id' : categoryId,
     'category': category,
-    'settled_date': settledDate
+    'settled_date': settledDate?.toIso8601String()
   };
 }
 
@@ -22,7 +22,7 @@ extension TransactionFromMap on Map<String, dynamic> {
     date: DateTime.parse(this['date']),
     dueDate: this['due_date'] != null ? DateTime.parse(this['due_date']) : null,
     accountId: this['account_id'],
-    settledDate: this['settled_date'],
+    settledDate: this['settled_date'] != null ? DateTime.parse(this['settled_date']) : null,
     categoryId: this['transaction_category_id'],
     category: this['category']
   );

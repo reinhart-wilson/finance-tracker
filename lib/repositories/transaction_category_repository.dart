@@ -1,4 +1,4 @@
-import 'package:finance_tracker/models/transaction_category.dart';
+import 'package:finance_tracker/models/transaction/transaction_category.dart';
 import 'package:finance_tracker/services/local_data_service.dart';
 import 'package:finance_tracker/models/mappers/transaction_category_mapper.dart';
 import 'package:flutter/foundation.dart';

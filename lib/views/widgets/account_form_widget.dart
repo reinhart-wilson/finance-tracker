@@ -1,5 +1,5 @@
 import 'package:finance_tracker/models/account.dart';
-import 'package:finance_tracker/viewmodels/account_list_viewmodel.dart';
+import 'package:finance_tracker/viewmodels/account/account_list_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -36,11 +36,11 @@ class _AccountFormViewState extends State<AccountFormView> {
             TextFormField(
                 onSaved: (value) => accountName = value,
                 decoration: const InputDecoration(
-                  labelText: 'New Account Name',
+                  labelText: 'Nama Akun',
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter account name.';
+                    return 'Silakan masukkan nama akun.';
                   }
                   return null;
                 }),

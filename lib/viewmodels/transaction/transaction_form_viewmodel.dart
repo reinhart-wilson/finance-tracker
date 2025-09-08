@@ -1,6 +1,6 @@
 import 'package:finance_tracker/models/account.dart';
-import 'package:finance_tracker/models/transaction.dart';
-import 'package:finance_tracker/models/transaction_category.dart';
+import 'package:finance_tracker/models/transaction/transaction.dart';
+import 'package:finance_tracker/models/transaction/transaction_category.dart';
 import 'package:finance_tracker/repositories/account_repository.dart';
 import 'package:finance_tracker/repositories/transaction_category_repository.dart';
 import 'package:finance_tracker/repositories/transaction_repository.dart';
