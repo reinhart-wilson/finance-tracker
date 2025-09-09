@@ -24,6 +24,6 @@ extension TransactionFromMap on Map<String, dynamic> {
     accountId: this['account_id'],
     settledDate: this['settled_date'] != null ? DateTime.parse(this['settled_date']) : null,
     categoryId: this['transaction_category_id'],
-    category: this['category']
+    category: this['category_name']
   );
 }
