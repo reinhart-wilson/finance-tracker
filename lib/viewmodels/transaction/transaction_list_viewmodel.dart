@@ -59,6 +59,7 @@ class TransactionListViewmodel extends ChangeNotifier {
       ? [..._settledTransactions, ..._unsettledTransactions]
       : _filteredTransactions;
   List<TransactionCategory> get categories => _categories;
+  TransactionFilter get filter => _filter;
 
   Future<void> _loadAccounts() async {
     _isLoading = true;

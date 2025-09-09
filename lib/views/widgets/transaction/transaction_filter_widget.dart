@@ -13,8 +13,8 @@ class TransactionFilterWidget extends StatefulWidget {
 }
 
 class TransactionFilterWidgetState extends State<TransactionFilterWidget> {
-  final List<TransactionCategory> _selectedCategories = [];
-  final List<Account> _selectedAccounts = [];
+  List<TransactionCategory> _selectedCategories = [];
+  List<Account> _selectedAccounts = [];
   var _includeCredit = true;
   var _includeDebit = true;
   var _includePastDue = true;
@@ -25,10 +25,26 @@ class TransactionFilterWidgetState extends State<TransactionFilterWidget> {
   @override
   void initState() {
     super.initState();
+    _loadFilter();
+  }
+
+  void _loadFilter() {
+    final filter = context.read<TransactionListViewmodel>().filter;
+    _selectedAccounts = filter.accounts ?? [];
+    _selectedCategories = filter.categories ?? [];
     now = DateTime.now();
     _startDate = DateTime(now.year, now.month, 1);
     _endDate =
         DateTime(now.year, now.month + 1, 1).subtract(const Duration(days: 1));
+    _startDate = filter.startDate ?? _startDate;
+    _endDate = filter.endDate ?? _endDate;
+    _includePastDue = filter.loadPreviouslyUnsettled ? true : false;
+    final transactionType = filter.transactionType;
+    if (transactionType == 'credit') {
+      _includeDebit = false;
+    } else if (transactionType == 'debit') {
+      _includeCredit = false;
+    }
   }
 
   Future<void> _pickDate({

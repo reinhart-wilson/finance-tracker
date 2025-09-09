@@ -45,11 +45,15 @@ class TransactionListView extends StatelessWidget {
                   ),
                 )),
                 const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.filter_list),
-                  onPressed: () {
-                    Scaffold.of(context).openEndDrawer();
-                  },
+                Builder(
+                  builder: (context) {
+                    return IconButton(
+                      icon: const Icon(Icons.filter_list),
+                      onPressed: () {
+                        Scaffold.of(context).openEndDrawer();
+                      },
+                    );
+                  }
                 ),
               ],
             ),
