@@ -9,14 +9,14 @@ List<SingleChildWidget> buildProviders() {
 
   return [
     // Repos
-    Provider<AccountRepository>(
+    ChangeNotifierProvider<AccountRepository>(
       create: (_) => AccountRepository(localDataService: localDataService),
     ),
-    Provider<TransactionCategoryRepository>(
+    ChangeNotifierProvider<TransactionCategoryRepository>(
       create: (_) =>
           TransactionCategoryRepository(localDataService: localDataService),
     ),
-    Provider<TransactionRepository>(
+    ChangeNotifierProvider<TransactionRepository>(
       create: (_) => TransactionRepository(localDataService: localDataService),
     ),
 
@@ -37,6 +37,7 @@ List<SingleChildWidget> buildProviders() {
     ChangeNotifierProvider<TransactionListViewmodel>(
         create: (context) => TransactionListViewmodel(
             txRepository: context.read<TransactionRepository>(),
-            accountRepository: context.read<AccountRepository>())),
+            accountRepository: context.read<AccountRepository>(),
+            categoryRepository: context.read<TransactionCategoryRepository>())),
   ];
 }
