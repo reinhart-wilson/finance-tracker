@@ -54,7 +54,7 @@ class AccountDetailViewmodel extends ChangeNotifier {
       // Get the sum of unsettled transactions until the end of the month
       _parentAccountUnsettled =
           await _transactionRepository.getUnsettledTransactionsSum(
-        accountId: parentId,
+        accountIds: [parentId],
         endDate: lastDayOfMonth,
       );
 
@@ -64,7 +64,7 @@ class AccountDetailViewmodel extends ChangeNotifier {
       for (final account in childAccountsList) {
         final unsettledAmount =
             await _transactionRepository.getUnsettledTransactionsSum(
-          accountId: account.id,
+          accountIds: [account.id!],
           endDate: lastDayOfMonth,
         );
         _unsettledAmountByAccount[account] = unsettledAmount;
@@ -75,13 +75,13 @@ class AccountDetailViewmodel extends ChangeNotifier {
           await _transactionRepository.getSettledTransactions(
         startDate: firstDayOfMonth,
         endDate: lastDayOfMonth,
-        accountId: parentId,
+        accountIds: [parentId],
       );
 
       _unsettledTransactions =
           await _transactionRepository.getUnsettledTransactions(
         endDate: lastDayOfMonth,
-        accountId: parentId,
+        accountIds: [parentId],
       );
     } catch (e) {
       rethrow;

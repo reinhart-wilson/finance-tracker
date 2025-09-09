@@ -1,11 +1,14 @@
+import 'package:finance_tracker/models/account.dart';
+import 'package:finance_tracker/models/transaction/transaction_category.dart';
+
 class TransactionFilter {
-  TransactionFilter({this.startDate, this.endDate, this.accountId,
-      this.transactionType, this.categoryId, this.loadPreviouslyUnsettled = true});
+  TransactionFilter({this.startDate, this.endDate, this.accounts,
+      this.transactionType, this.categories, this.loadPreviouslyUnsettled = true});
 
   DateTime? startDate;
   DateTime? endDate;
-  int? accountId;
+  List<Account>? accounts;
   String? transactionType; // 'credit', 'debit', atau null (semua)
-  int? categoryId;
+  List<TransactionCategory>? categories;
   bool loadPreviouslyUnsettled = true;
 }

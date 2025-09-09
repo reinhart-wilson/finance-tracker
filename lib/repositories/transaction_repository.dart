@@ -14,14 +14,14 @@ class TransactionRepository with ChangeNotifier {
   Future<List<Transaction>> getSettledTransactions({
     DateTime? startDate,
     DateTime? endDate,
-    int? accountId,
+    List<int>? accountIds,
+    List<int>? categoryId,
     String? transactionType, // 'credit', 'debit', atau null (semua)
-    int? categoryId,
   }) async {
     final transactions = await _localDataService.fetchSettledTransactions(
         startDate: startDate,
         endDate: endDate,
-        accountId: accountId,
+        accountIds: accountIds,
         transactionType: transactionType,
         categoryId: categoryId);
     return transactions.map((transaction) => transaction.fromMap()).toList();
@@ -30,14 +30,14 @@ class TransactionRepository with ChangeNotifier {
   Future<List<Transaction>> getUnsettledTransactions({
     DateTime? startDate,
     DateTime? endDate,
-    int? accountId,
-    String? transactionType, // 'credit', 'debit', atau null (semua)
-    int? categoryId,
+    List<int>? accountIds,
+    List<int>? categoryId,
+    String? transactionType,
   }) async {
     final transactions = await _localDataService.fetchUnsettledTransactions(
         startDate: startDate,
         endDate: endDate,
-        accountId: accountId,
+        accountIds: accountIds,
         transactionType: transactionType,
         categoryId: categoryId);
     return transactions.map((transaction) => transaction.fromMap()).toList();
@@ -46,14 +46,14 @@ class TransactionRepository with ChangeNotifier {
   Future<double> getSettledTransactionsSum({
     DateTime? startDate,
     DateTime? endDate,
-    int? accountId,
-    String? transactionType, // 'credit', 'debit', atau null (semua)
-    int? categoryId,
+    List<int>? accountIds,
+    List<int>? categoryId,
+    String? transactionType,
   }) async {
     final sum = await _localDataService.getSettledTransactionSum(
         startDate: startDate,
         endDate: endDate,
-        accountId: accountId,
+        accountIds: accountIds,
         transactionType: transactionType,
         categoryId: categoryId);
     return sum;
@@ -62,14 +62,14 @@ class TransactionRepository with ChangeNotifier {
   Future<double> getUnsettledTransactionsSum({
     DateTime? startDate,
     DateTime? endDate,
-    int? accountId,
-    String? transactionType, // 'credit', 'debit', atau null (semua)
-    int? categoryId,
+    List<int>? accountIds,
+    List<int>? categoryId,
+    String? transactionType,
   }) async {
     final sum = await _localDataService.getUnsettledTransactionSum(
         startDate: startDate,
         endDate: endDate,
-        accountId: accountId,
+        accountIds: accountIds,
         transactionType: transactionType,
         categoryId: categoryId);
     return sum;
