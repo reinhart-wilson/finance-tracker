@@ -1,6 +1,7 @@
 import 'package:finance_tracker/models/transaction/transaction.dart';
 import 'package:finance_tracker/viewmodels/transaction/transaction_list_viewmodel.dart';
 import 'package:finance_tracker/views/transaction_form_view.dart';
+import 'package:finance_tracker/views/widgets/transaction/transaction_filter_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -11,11 +12,12 @@ class TransactionListView extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = context.read<TransactionListViewmodel>();
     return Scaffold(
+      endDrawer: const Drawer(child: TransactionFilterWidget(),),
       floatingActionButton: FloatingActionButton(
           onPressed: () {
             Navigator.of(context, rootNavigator: false).push(
               MaterialPageRoute(
-                builder: (context) => TransactionFormView(),
+                builder: (context) => const TransactionFormView(),
               ),
             );
           },
@@ -46,7 +48,7 @@ class TransactionListView extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.filter_list),
                   onPressed: () {
-                    // TODO: buka modal/bottom sheet filter
+                    Scaffold.of(context).openEndDrawer();
                   },
                 ),
               ],

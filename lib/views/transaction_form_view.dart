@@ -74,7 +74,6 @@ class _TransactionFormViewState extends State<TransactionFormView> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    // TODO: tambah button untuk menambahkan kategori
                     CategoryDropdown(
                       selectedCategory: _selectedCategory,
                       onChanged: (newCategory) async {
@@ -83,7 +82,7 @@ class _TransactionFormViewState extends State<TransactionFormView> {
                             context,
                             MaterialPageRoute(
                                 builder: (_) =>
-                                    CategoryFormWidget()), // TODO: Implement CategoryFormView();
+                                    CategoryFormWidget()),
                           );
                           if (result is TransactionCategory) {
                             setState(() {
