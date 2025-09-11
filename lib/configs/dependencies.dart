@@ -1,5 +1,6 @@
 import 'package:finance_tracker/repositories/repositories.dart';
 import 'package:finance_tracker/services/local_data_service.dart';
+import 'package:finance_tracker/viewmodels/transaction/transaction_category_viewmodel.dart';
 import 'package:finance_tracker/viewmodels/view_models.dart';
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
@@ -28,7 +29,8 @@ List<SingleChildWidget> buildProviders() {
     ),
     ChangeNotifierProvider<AccountListViewmodel>(
         create: (context) => AccountListViewmodel(
-            repository: context.read<AccountRepository>())),
+            accountRepository: context.read<AccountRepository>(),
+            txnRepository: context.read<TransactionRepository>())),
     ChangeNotifierProvider<TransactionFormViewmodel>(
         create: (context) => TransactionFormViewmodel(
             transactionRepository: context.read<TransactionRepository>(),
@@ -37,6 +39,10 @@ List<SingleChildWidget> buildProviders() {
     ChangeNotifierProvider<TransactionListViewmodel>(
         create: (context) => TransactionListViewmodel(
             txRepository: context.read<TransactionRepository>(),
+            accountRepository: context.read<AccountRepository>(),
+            categoryRepository: context.read<TransactionCategoryRepository>())),
+    ChangeNotifierProvider<TransactionCategoryViewmodel>(
+        create: (context) => TransactionCategoryViewmodel(
             accountRepository: context.read<AccountRepository>(),
             categoryRepository: context.read<TransactionCategoryRepository>())),
   ];
