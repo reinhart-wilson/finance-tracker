@@ -74,8 +74,9 @@ class LocalDataService {
     DateTime? endDate,
     String? transactionType, // 'debit', 'credit', atau null
     List<int>? categoryId,
+    DatabaseExecutor? txn,
   }) async {
-    final db = await database;
+    final db = txn?? await database;
 
     // Start building the SQL and parameters
     String sql = 'SELECT SUM(amount) AS total FROM transactions t';
@@ -84,11 +85,12 @@ class LocalDataService {
 
     // Filter account
     if (accountIds != null && accountIds.isNotEmpty) {
+      List<int> childrenAccountIds = [];
       for (final accountId in accountIds) {
-        final childrenAccountIds =
-            await _getAccountIdsIncludingChildren(accountId);
-        accountIds.addAll(childrenAccountIds);
+        childrenAccountIds
+            .addAll(await _getAccountIdsIncludingChildren(accountId, txn: txn));
       }
+      accountIds.addAll(childrenAccountIds.toSet());
       final placeholders = List.filled(accountIds.length, '?').join(',');
       conditions.add('t.account_id IN ($placeholders)');
       args.addAll(accountIds);
@@ -151,11 +153,12 @@ class LocalDataService {
 
     // Filter account
     if (accountIds != null && accountIds.isNotEmpty) {
+      List<int> childrenAccountIds = [];
       for (final accountId in accountIds) {
-        final childrenAccountIds =
-            await _getAccountIdsIncludingChildren(accountId);
-        accountIds.addAll(childrenAccountIds);
+        childrenAccountIds
+            .addAll(await _getAccountIdsIncludingChildren(accountId));
       }
+      accountIds.addAll(childrenAccountIds.toSet());
       final placeholders = List.filled(accountIds.length, '?').join(',');
       conditions.add('t.account_id IN ($placeholders)');
       args.addAll(accountIds);
@@ -327,11 +330,12 @@ class LocalDataService {
 
     // Step 1: Ambil id akun + subakun
     if (accountIds != null && accountIds.isNotEmpty) {
+      List<int> childrenAccountIds = [];
       for (final accountId in accountIds) {
-        final childrenAccountIds =
-            await _getAccountIdsIncludingChildren(accountId);
-        accountIds.addAll(childrenAccountIds);
+        childrenAccountIds
+            .addAll(await _getAccountIdsIncludingChildren(accountId));
       }
+      accountIds.addAll(childrenAccountIds.toSet());
     }
 
     // Step 2: Bangun where clause
@@ -399,11 +403,12 @@ class LocalDataService {
 
     // Step 1: Ambil id akun + subakun
     if (accountIds != null && accountIds.isNotEmpty) {
+      List<int> childrenAccountIds = [];
       for (final accountId in accountIds) {
-        final childrenAccountIds =
-            await _getAccountIdsIncludingChildren(accountId);
-        accountIds.addAll(childrenAccountIds);
+        childrenAccountIds
+            .addAll(await _getAccountIdsIncludingChildren(accountId));
       }
+      accountIds.addAll(childrenAccountIds.toSet());
     }
 
     // Step 2: Bangun where clause
@@ -460,9 +465,34 @@ class LocalDataService {
     return result;
   }
 
+  Future<Map<String, dynamic>> fetchSingleTransaction(int transactionId, {DatabaseExecutor? txn}) async {
+    final db = txn??await database;
+
+    final result = await db.query(
+      'transactions',
+      where: 'id = ?',
+      whereArgs: [transactionId],
+    );
+
+    return result.first;
+  }
+
+  Future<void> updateBalance(int accountId, double balance, {Transaction? txn}) async {
+    final db = txn?? await database;
+
+    await db.rawUpdate(
+      '''
+    UPDATE accounts
+    SET balance = balance + ?
+    WHERE id = ? OR parent_id = ?
+    ''',
+      [balance, accountId, accountId],
+    );
+  }
+
   /// Helper to get account IDs including sub-accounts
-  Future<List<int>> _getAccountIdsIncludingChildren(int accountId) async {
-    final db = await database;
+  Future<List<int>> _getAccountIdsIncludingChildren(int accountId, {DatabaseExecutor? txn}) async {
+    final db = txn??await database;
 
     // Ambil id sendiri + subakun (parent_id = accountId)
     final rows = await db.query(
@@ -474,6 +504,28 @@ class LocalDataService {
     return rows.map((row) => row['id'] as int).toList();
   }
 
+  /// Marks transaction as settled and updates both the account's and
+  /// it's parent(if any)'s balance
+  Future<void> markTransactionAsSettled(int transactionId) async {
+    try {
+      final db = await database;
+      db.transaction((txn) async {
+        var transactionData = await fetchSingleTransaction(transactionId, txn: txn);
+
+        await updateBalance(
+            transactionData["account_id"], transactionData["amount"], txn : txn);
+
+        await txn.update(
+          'transactions',
+          {'settled_date': DateTime.now().toIso8601String()},
+          where: 'id = ?',
+          whereArgs: [transactionId]
+        );
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
   // ===========================================================================
   // Transaction Category-Related Methods
   // ===========================================================================
@@ -581,26 +633,23 @@ class LocalDataService {
 
     db.transaction((txn) async {
       // Step 1: Update balances from both sub and main (if any) account
-      final amount = await getSettledTransactionSum(accountIds: [accountId]);
+      final amount = await getSettledTransactionSum(accountIds: [accountId], txn: txn);
       await _updateAccountBalances(txn, accountId, amount);
 
       /// Step 2: Delete transaction from transaction table
-      final transactionDeleteResponse = await txn.delete(
+      await txn.delete(
         'transactions',
         where: 'account_id = ?',
         whereArgs: [accountId],
       );
-      if (transactionDeleteResponse < 0) {
-        throw Exception("Failed to delete transaction");
-      }
 
       /// Step 3: Delete account
       final accDeleteResponse = await txn.delete(
-        'transactions',
-        where: 'account_id = ?',
+        'accounts',
+        where: 'id = ?',
         whereArgs: [accountId],
       );
-      if (accDeleteResponse < 0) {
+      if (accDeleteResponse == 0) {
         throw Exception("Failed to delete account");
       }
     });
@@ -627,6 +676,7 @@ class LocalDataService {
     );
   }
 
+  /// Returns a map containing a single account's data with requested ID
   Future<Map<String, dynamic>> fetchSingleAccount(int accountId) async {
     final db = await database;
 
