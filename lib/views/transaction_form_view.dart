@@ -24,7 +24,8 @@ class _TransactionFormViewState extends State<TransactionFormView> {
     super.initState();
     _vm = context.read<TransactionFormViewmodel>();
   }
-
+  
+  final TextEditingController _titleController = TextEditingController();
   late TransactionFormViewmodel _vm;
   final dateFormat = DateFormat('dd/MM/yyyy');
   TransactionCategory? _selectedCategory;
@@ -37,11 +38,12 @@ class _TransactionFormViewState extends State<TransactionFormView> {
   String? _title;
 
   Future<void> _pickTransactionDate() async {
+    final now = DateTime.now();
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedTxDate, // default ke tanggal sekarang
       firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      lastDate: now,
     );
 
     if (picked != null && picked != _selectedTxDate) {
@@ -123,7 +125,7 @@ class _TransactionFormViewState extends State<TransactionFormView> {
                           _selectedAccount = value;
                         },
                         decoration: const InputDecoration(
-                          labelText: 'Akun',
+                          labelText: 'Mutated Account',
                         ),
                       ),
                     ),
@@ -131,7 +133,7 @@ class _TransactionFormViewState extends State<TransactionFormView> {
                       children: [
                         Expanded(
                           child: RadioListTile<TransactionType>(
-                            title: const Text("Penghasilan"),
+                            title: const Text("Income"),
                             autofocus: true,
                             value: TransactionType.income,
                             groupValue: _type,
@@ -144,7 +146,7 @@ class _TransactionFormViewState extends State<TransactionFormView> {
                         ),
                         Expanded(
                           child: RadioListTile<TransactionType>(
-                            title: const Text("Pengeluaran"),
+                            title: const Text("Expense"),
                             value: TransactionType.expense,
                             groupValue: _type,
                             onChanged: (value) {
@@ -164,11 +166,11 @@ class _TransactionFormViewState extends State<TransactionFormView> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return "Amount tidak boleh kosong";
+                          return "Please fill out transaction amount.";
                         }
                         final number = double.tryParse(value);
                         if (number == null || number <= 0) {
-                          return "Masukkan angka yang valid";
+                          return "Not a valid number.";
                         }
                         return null;
                       },
@@ -184,7 +186,7 @@ class _TransactionFormViewState extends State<TransactionFormView> {
                             "${_selectedTxDate.day}/${_selectedTxDate.month}/${_selectedTxDate.year}",
                       ),
                       decoration: const InputDecoration(
-                        labelText: "Tanggal Transaksi",
+                        labelText: "Transaction Date",
                         suffixIcon: Icon(Icons.calendar_today),
                       ),
                       onTap: _pickTransactionDate,
@@ -199,7 +201,7 @@ class _TransactionFormViewState extends State<TransactionFormView> {
                           }
                         });
                       },
-                      title: const Text("Ini adalah transaksi jatuh tempo"),
+                      title: const Text("This transaction is due"),
                       controlAffinity: ListTileControlAffinity.leading,
                     ),
 
@@ -210,10 +212,10 @@ class _TransactionFormViewState extends State<TransactionFormView> {
                         validator: (_) {
                           if (_hasDueDate) {
                             if (_selectedDueDate == null) {
-                              return "Tanggal tidak boleh kosong";
+                              return "Please fill out date.";
                             }
                             if (_selectedTxDate.isAfter(_selectedDueDate!)) {
-                              return "Harus setelah tanggal transaksi";
+                              return "Due date has to be after transaction date.";
                             }
                           }
                           return null;
@@ -224,25 +226,26 @@ class _TransactionFormViewState extends State<TransactionFormView> {
                               : dateFormat.format(_selectedDueDate!),
                         ),
                         decoration: const InputDecoration(
-                          labelText: "Tanggal Jatuh Tempo",
+                          labelText: "Due Date",
                           suffixIcon: Icon(Icons.calendar_today),
                         ),
                         onTap: _pickDueDate,
                       ),
                     TextFormField(
+                      controller: _titleController,
                       decoration: const InputDecoration(
-                        labelText: "Berita",
+                        labelText: "Remarks",
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return "Berita tidak boleh kosong";
+                          return "Please fill out remarks.";
                         }
                         return null;
                       },
                       onSaved: (value) {
                         // simpan ke model atau variabel
                         _title = (value);
-                      },
+                      }, 
                     ),
                     ElevatedButton(
                       onPressed: () async {
