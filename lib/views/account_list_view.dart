@@ -1,12 +1,19 @@
 import 'package:finance_tracker/models/account.dart';
+import 'package:finance_tracker/views/account_detail_view.dart';
 import 'package:flutter/material.dart';
 import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:finance_tracker/viewmodels/account/account_list_viewmodel.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:finance_tracker/views/widgets/account_form_widget.dart';
 
 class AccountListView extends StatelessWidget {
   const AccountListView({super.key});
+
+  String formatBalance(double balance) {
+    final formatter = NumberFormat("#,###", "id_ID");
+    return "Rp. ${formatter.format(balance)}";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,13 +45,30 @@ class AccountListView extends StatelessWidget {
           },
           builder: (context, node) => Card(
             child: ListTile(
+              onTap: () {
+                Navigator.of(context, rootNavigator: false).push(
+                  MaterialPageRoute(
+                    builder: (_) => const AccountDetailView(),
+                    settings: RouteSettings(arguments: node.data),
+                  ),
+                );
+              },
               title: Text(node.data == null ? 'Accounts' : node.data.name),
               subtitle: node.data == null
                   ? null
-                  : Text('Balance: ${node.data.balance}'),
+                  : Text('Balance: ${formatBalance(node.data.balance)}'),
               trailing: IconButton(
                   onPressed: !viewModel.isLoading
-                      ? () => viewModel.deleteAccount(node.data.id)
+                      ? () async {
+                          try {
+                            await viewModel.deleteAccount(node.data.id);
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Deletion failed: $e')),
+                            );
+                          }
+                        }
                       : null,
                   icon: const Icon(Icons.delete, color: Colors.red)),
             ),
