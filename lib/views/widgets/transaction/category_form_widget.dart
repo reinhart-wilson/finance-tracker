@@ -102,7 +102,7 @@ class CategoryFormWidgetState extends State<CategoryFormWidget> {
                       backgroundColor: _selectedColor, // preview di tombol
                       foregroundColor: useWhiteForeground(_selectedColor)
                           ? Colors.white
-                          : Colors.black,
+                          : const Color.fromRGBO(0, 0, 0, 1),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 16),
                     ),
@@ -111,6 +111,7 @@ class CategoryFormWidgetState extends State<CategoryFormWidget> {
                   Selector<TransactionCategoryViewmodel, bool>(
                     selector: (_, vm) => vm.isLoading,
                     builder: (context, isLoading, child) {
+                      final localContext = context;
                       return ElevatedButton(
                         onPressed: isLoading
                             ? null
@@ -119,20 +120,22 @@ class CategoryFormWidgetState extends State<CategoryFormWidget> {
                                   _formKey.currentState!.save();
                                   try {
                                     final viewModel = vm;
-                                    await viewModel.insertCategory(
-                                        TransactionCategory(
-                                            name: _categoryName!,
-                                            color: _selectedColor.toHexString(),
-                                            defaultAccountId:
-                                                _selectedAccount!.id!));
-                                    if (!mounted) return;
-                                    Navigator.pop(context);
+                                    await viewModel
+                                        .insertCategory(TransactionCategory(
+                                      name: _categoryName!,
+                                      color: _selectedColor.toHexString(),
+                                      defaultAccountId: _selectedAccount?.id!,
+                                    ));
+
+                                    if (!localContext.mounted) return;
+                                    Navigator.pop(localContext);
                                   } catch (e) {
-                                    if (!mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                          content:
-                                              Text('Gagal menyimpan akun')),
+                                    if (!localContext.mounted) return;
+                                    ScaffoldMessenger.of(localContext)
+                                        .showSnackBar(
+                                      SnackBar(
+                                          content: Text(
+                                              'Gagal menyimpan kategori: $e')),
                                     );
                                   }
                                 }
