@@ -2,6 +2,7 @@ import 'package:finance_tracker/models/transaction/transaction.dart';
 import 'package:finance_tracker/viewmodels/transaction/transaction_list_viewmodel.dart';
 import 'package:finance_tracker/views/transaction_form_view.dart';
 import 'package:finance_tracker/views/widgets/transaction/transaction_filter_widget.dart';
+import 'package:finance_tracker/views/widgets/transaction/transaction_item_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -12,7 +13,9 @@ class TransactionListView extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = context.read<TransactionListViewmodel>();
     return Scaffold(
-      endDrawer: const Drawer(child: TransactionFilterWidget(),),
+      endDrawer: const Drawer(
+        child: TransactionFilterWidget(),
+      ),
       floatingActionButton: FloatingActionButton(
           onPressed: () {
             Navigator.of(context, rootNavigator: false).push(
@@ -35,7 +38,7 @@ class TransactionListView extends StatelessWidget {
                     vm.searchTransaction(value);
                   },
                   decoration: InputDecoration(
-                    hintText: 'Cari...',
+                    hintText: 'Search...',
                     prefixIcon: const Icon(Icons.search),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -45,81 +48,115 @@ class TransactionListView extends StatelessWidget {
                   ),
                 )),
                 const SizedBox(width: 8),
-                Builder(
-                  builder: (context) {
-                    return IconButton(
-                      icon: const Icon(Icons.filter_list),
-                      onPressed: () {
-                        Scaffold.of(context).openEndDrawer();
-                      },
-                    );
-                  }
-                ),
+                Builder(builder: (context) {
+                  return IconButton(
+                    icon: const Icon(Icons.filter_list),
+                    onPressed: () {
+                      Scaffold.of(context).openEndDrawer();
+                    },
+                  );
+                }),
               ],
             ),
           ),
-          Selector<TransactionListViewmodel, List<Transaction>>(
-            selector: (_, vm) => vm.filteredTransactions,
-            builder: (context, filteredTransactions, child) {
-              return Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(20),
-                  itemCount: filteredTransactions.length,
-                  itemBuilder: (context, index) {
-                    final tx = filteredTransactions[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Expanded(
+            child: Selector<TransactionListViewmodel, List<Transaction>>(
+              selector: (_, vm) => vm.filteredTransactions,
+              builder: (context, filteredTransactions, child) {
+                return buildTransactionItem(context, filteredTransactions,
+                    getAccountNameCallback: vm.accountNameOfId,
+                    onLongPressCallback: (tx) async {
+                  await showDialog(
+                    context: context,
+                    builder: (context) {
+                      return SimpleDialog(
+                        title: const Text('Action'),
                         children: [
-                          // Kiri
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                tx.title, // dari atribut title
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                vm.accountNameOfId(tx.accountId),
-                                style: const TextStyle(color: Colors.grey),
-                              ),
-                              Text(
-                                tx.category == null
-                                    ? 'None'
-                                    : tx.category!, // dari atribut category
-                                style: const TextStyle(color: Colors.grey),
-                              ),
-                            ],
+                          SimpleDialogOption(
+                            onPressed: () async {
+                              final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text('Confirm Deletion'),
+                                    content: Text.rich(
+                                      TextSpan(
+                                        text:
+                                            'Are you sure you want to delete transaction ',
+                                        style: const TextStyle(
+                                            color: Colors.black),
+                                        children: [
+                                          TextSpan(
+                                            text: tx.title,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          const TextSpan(text: '?'),
+                                        ],
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, false),
+                                        child: const Text('No'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, true),
+                                        child: const Text('Yes'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                              if (confirmed != null && confirmed) {
+                                try {
+                                  vm.deleteTransaction(tx);
+                                } catch (e) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text('Deletion failed: $e')),
+                                  );
+                                } finally {
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                  }
+                                }
+                              }
+                            },
+                            child: const Text('Delete transaction'),
                           ),
-                          // Kanan
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                "${tx.amount}", // dari atribut amount
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: tx.amount >= 0
-                                      ? Colors.green
-                                      : Colors.red,
-                                ),
-                              ),
-                              Text(
-                                tx.date.toString(),
-                                style: const TextStyle(color: Colors.grey),
-                              ),
-                            ],
-                          ),
+                          if (tx.settledDate == null)
+                            SimpleDialogOption(
+                              child: const Text('Mark as settled'),
+                              onPressed: () async {
+                                try {
+                                  await vm.markTransactionAsSettled(tx);
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text('Transaction marked as settled.')),
+                                  );
+                                } catch (e) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text('Deletion failed: $e')),
+                                  );
+                                } finally {
+                                  if (context.mounted) Navigator.pop(context);
+                                }
+                              },
+                            )
                         ],
-                      ),
-                    );
-                  },
-                ),
-              );
-            },
+                      );
+                    },
+                  ); //showdialog
+                });
+              },
+            ),
           )
         ],
       ),

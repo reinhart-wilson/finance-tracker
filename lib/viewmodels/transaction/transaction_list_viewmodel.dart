@@ -17,9 +17,8 @@ class TransactionListViewmodel extends ChangeNotifier {
     // By default loads all transactions settled in the current month or
     // still due up to current month.
     final now = DateTime.now();
-    final firstDayOfMonth = DateTime(now.year, now.month, 1);
-    final lastDayOfMonth =
-        DateTime(now.year, now.month + 1, 1).subtract(const Duration(days: 1));
+    final firstDayOfMonth = now.subtract(const Duration(days:30));
+    final lastDayOfMonth = now;
     _filter = TransactionFilter(
         startDate: firstDayOfMonth,
         endDate: lastDayOfMonth,
@@ -27,10 +26,10 @@ class TransactionListViewmodel extends ChangeNotifier {
     _loadTransactions();
     _loadCategories();
 
-    _txRepository.addListener((){
+    _txRepository.addListener(() {
       _loadTransactions();
     });
-    _accountRepository.addListener((){
+    _accountRepository.addListener(() {
       _loadAccounts();
     });
   }
@@ -55,7 +54,7 @@ class TransactionListViewmodel extends ChangeNotifier {
   double get unsettledSum => _unsettledSum;
   bool get isLoading => _isLoading;
   List<Account> get accounts => _accounts;
-  List<Transaction> get filteredTransactions => _keyword.isEmpty
+  List<Transaction> get filteredTransactions => _filteredTransactions.isEmpty
       ? [..._settledTransactions, ..._unsettledTransactions]
       : _filteredTransactions;
   List<TransactionCategory> get categories => _categories;
@@ -72,9 +71,10 @@ class TransactionListViewmodel extends ChangeNotifier {
   Future<void> _loadTransactions() async {
     _isLoading = true;
     notifyListeners();
-    final List<int>? accountIds = _filter.accounts?.map((account) => account.id! ).toList();
-    final List<int>? categoryIds = _filter.categories?.map((category) => category.id! ).toList();
-    debugPrint(categoryIds.toString());
+    final List<int>? accountIds =
+        _filter.accounts?.map((account) => account.id!).toList();
+    final List<int>? categoryIds =
+        _filter.categories?.map((category) => category.id!).toList();
     try {
       _settledTransactions = await _txRepository.getSettledTransactions(
           startDate: _filter.startDate,
@@ -131,6 +131,7 @@ class TransactionListViewmodel extends ChangeNotifier {
         return tx.title.toLowerCase().contains(_keyword.toLowerCase());
       }).toList();
     }
+    sortTransactions();
     notifyListeners();
   }
 
@@ -138,12 +139,57 @@ class TransactionListViewmodel extends ChangeNotifier {
     final account = _accounts.where((a) => a.id == accountId).firstOrNull;
     return account?.name ?? 'Unknown';
   }
-  
-    Future<void> _loadCategories() async {
+
+  String getColorOfCategory(int categoryId) {
+    final category = _categories.where((a) => a.id == categoryId).firstOrNull;
+    return category?.color ?? '0xFF000000';
+  }
+
+  Future<void> _loadCategories() async {
     _isLoading = true;
     notifyListeners();
     _categories = await _categoryRepository.getTransactionCategories();
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> deleteTransaction(Transaction tx) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      if (tx.id == null) throw Exception('Transaction no found');
+      await _txRepository.deleteTransaction(tx.id!);
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> markTransactionAsSettled(Transaction tx) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      await _txRepository.markTransactionAsSettled(tx);
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void sortTransactions() {
+    _filteredTransactions.sort((a, b) {
+      final aDate = a.settledDate ?? a.dueDate;
+      final bDate = b.settledDate ?? b.dueDate;
+
+      if (aDate == null && bDate == null) return 0;
+      if (aDate == null) return 1; // a > b, karena b punya tanggal
+      if (bDate == null) return -1; // a < b, karena a punya tanggal
+
+      return -aDate.compareTo(bDate);
+    });
   }
 }

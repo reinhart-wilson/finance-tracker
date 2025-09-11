@@ -95,4 +95,14 @@ class TransactionRepository with ChangeNotifier {
       rethrow;
     }
   }
+
+  Future<void> markTransactionAsSettled(Transaction tx) async {
+    try {
+      if (tx.id == null) throw Exception('Transaction id not found');
+      await _localDataService.markTransactionAsSettled(tx.id!);
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
