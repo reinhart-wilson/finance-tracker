@@ -16,6 +16,11 @@ class AccountRepository with ChangeNotifier {
     return accountMaps.map((accountMap) => accountMap.fromMap()).toList();
   }
 
+    Future<Account> getSingleAccount(Account account) async {
+    final foundAccount = await _localDataService.fetchSingleAccount(account.id!);
+    return foundAccount.fromMap();
+  }
+
   Future<int> addAccount(Account account) async {
     try {
       int id = await _localDataService.insertAccount(account.toMap());
