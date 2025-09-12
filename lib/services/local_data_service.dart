@@ -477,18 +477,18 @@ class LocalDataService {
     return result.first;
   }
 
-  Future<void> updateBalance(int accountId, double balance, {Transaction? txn}) async {
-    final db = txn?? await database;
+  // Future<void> updateBalance(int accountId, double balance, {Transaction? txn}) async {
+  //   final db = txn?? await database;
 
-    await db.rawUpdate(
-      '''
-    UPDATE accounts
-    SET balance = balance + ?
-    WHERE id = ? OR parent_id = ?
-    ''',
-      [balance, accountId, accountId],
-    );
-  }
+  //   await db.rawUpdate(
+  //     '''
+  //   UPDATE accounts
+  //   SET balance = balance + ?
+  //   WHERE id = ? OR parent_id = ?
+  //   ''',
+  //     [balance, accountId, accountId],
+  //   );
+  // }
 
   /// Helper to get account IDs including sub-accounts
   Future<List<int>> _getAccountIdsIncludingChildren(int accountId, {DatabaseExecutor? txn}) async {
@@ -512,8 +512,8 @@ class LocalDataService {
       db.transaction((txn) async {
         var transactionData = await fetchSingleTransaction(transactionId, txn: txn);
 
-        await updateBalance(
-            transactionData["account_id"], transactionData["amount"], txn : txn);
+        await _updateAccountBalances( txn,
+            transactionData["account_id"], transactionData["amount"]);
 
         await txn.update(
           'transactions',
