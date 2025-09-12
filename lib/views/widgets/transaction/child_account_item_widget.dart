@@ -45,7 +45,7 @@ ListView buildChildAccountItem(
                 Text(
                   formatCurrency(account.balance, shorten: true),
                   style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                      ?.copyWith(fontWeight: FontWeight.w600, color: projected >= 0 ? null : Colors.red ),
                 ),
                 const SizedBox(height: 1),
                 RichText(

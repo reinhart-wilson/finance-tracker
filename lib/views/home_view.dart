@@ -78,18 +78,18 @@ class _HomeViewState extends State<HomeView> {
         body: IndexedStack(
           index: _selectedIndex,
           children: [
-            _buildOffstageNavigator(0, const Text('Home')),
+            _buildOffstageNavigator(0, const AccountListView()),
             _buildOffstageNavigator(1, const TransactionListView()),
-            _buildOffstageNavigator(2, const AccountListView()),
+            _buildOffstageNavigator(2, const Text('Home')),
           ],
         ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedIndex,
           onTap: _onTap,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: "Beranda"),
-            BottomNavigationBarItem(icon: Icon(Icons.list), label: "Transaksi"),
             BottomNavigationBarItem(icon: Icon(Icons.wallet), label: "Akun"),
+            BottomNavigationBarItem(icon: Icon(Icons.list), label: "Transaksi"),
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: "Beranda"),
           ],
         ),
       ),
