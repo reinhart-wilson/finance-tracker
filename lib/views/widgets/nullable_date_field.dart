@@ -1,24 +1,29 @@
 import 'package:finance_tracker/utils/formatter.dart';
 import 'package:flutter/material.dart';
 
-class NullableDateField extends StatefulWidget {
+class TransactionFilterDateField extends StatefulWidget {
   final String label;
   final DateTime? value;
   final ValueChanged<DateTime?> onChanged;
+  final bool isNullable;
+  final bool isLimitEndDate;
 
-  const NullableDateField({
+  const TransactionFilterDateField({
     super.key,
     required this.label,
     required this.value,
     required this.onChanged,
+    this.isNullable = false,
+    this.isLimitEndDate = false
   });
 
   @override
-  State<NullableDateField> createState() => _NullableDateFieldState();
+  State<TransactionFilterDateField> createState() => _TransactionFilterDateFieldState();
 }
 
-class _NullableDateFieldState extends State<NullableDateField> {
+class _TransactionFilterDateFieldState extends State<TransactionFilterDateField> {
   DateTime? _selectedDate;
+
 
   @override
   void initState() {
@@ -27,7 +32,7 @@ class _NullableDateFieldState extends State<NullableDateField> {
   }
 
   @override
-  void didUpdateWidget(covariant NullableDateField oldWidget) {
+  void didUpdateWidget(covariant TransactionFilterDateField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.value != widget.value) {
       _selectedDate = widget.value;
@@ -41,7 +46,7 @@ class _NullableDateFieldState extends State<NullableDateField> {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: widget.label,
-          suffixIcon: _selectedDate != null
+          suffixIcon: _selectedDate != null && widget.isNullable
               ? IconButton(
                   iconSize: Theme.of(context).textTheme.titleMedium?.fontSize,
                   icon: const Icon(
@@ -58,11 +63,12 @@ class _NullableDateFieldState extends State<NullableDateField> {
         ),
         child: InkWell(
           onTap: () async {
+            final now = DateTime.now();
             final picked = await showDatePicker(
               context: context,
-              initialDate: _selectedDate ?? DateTime.now(),
+              initialDate: _selectedDate ?? now,
               firstDate: DateTime(2000),
-              lastDate: DateTime(2100),
+              lastDate: widget.isLimitEndDate ? now : DateTime(2100),
             );
             if (picked != null) {
               setState(() {
