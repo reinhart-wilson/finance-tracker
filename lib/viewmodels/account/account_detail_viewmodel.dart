@@ -12,7 +12,10 @@ class AccountDetailViewmodel extends ChangeNotifier {
   })  : _transactionRepository = transactionRepository,
         _accountRepository = accountRepository {
     _transactionRepository.addListener(() {
-      _loadSettledTransactions();
+      _loadSettledTransactions(
+          startDate: _settledStartDate, endDate: _settledEndDate);
+      _loadUnsettledTransactions(
+          startDate: _dueStartDate, endDate: _dueEndDate);
     });
   }
 
@@ -25,11 +28,16 @@ class AccountDetailViewmodel extends ChangeNotifier {
   List<Transaction> _settledTransactions = [];
   List<Transaction> _unsettledTransactions = [];
   final Map<int, double> _unsettledAmountByAccountId = {};
-  bool _isLoading = false;
+  bool _isLoading = true;
+  DateTime? _settledStartDate;
+  DateTime? _settledEndDate;
+  DateTime? _dueStartDate;
+  DateTime? _dueEndDate;
 
   List<Account> _childAccountsList = [];
 
   // Getters
+  Account? get parentAccount => _parentAccount;
   double? get parentAccountUnsettled => _parentAccountUnsettled;
   double? get parentAccountSettled => _parentAccountSettled;
   List<Transaction> get settledTransactions => _settledTransactions;
@@ -44,31 +52,48 @@ class AccountDetailViewmodel extends ChangeNotifier {
   Future<void> loadAccountInfo(Account parentAccount) async {
     _isLoading = true;
     notifyListeners();
-    _parentAccount = parentAccount;
-    await _loadSettledTransactions();
+    final now = DateTime.now();
+    _dueEndDate = _settledEndDate = DateTime(now.year, now.month + 1, 0);
+    _settledStartDate = DateTime(now.year, now.month, 1);
+    try {
+      _parentAccount = (parentAccount);
+      await _loadSettledTransactions(
+          startDate: _settledStartDate, endDate: _settledEndDate);
+      await _loadUnsettledTransactions(endDate: _dueEndDate);
+    } catch (e) {
+      rethrow;
+    }
     _isLoading = false;
     notifyListeners();
   }
 
-  void applyUnsettledFilter({DateTime? startDate, DateTime? endDate}) {
-    _loadSettledTransactions(endDate: endDate, startDate: startDate);
+  void applyUnsettledFilter({DateTime? startDate, DateTime? endDate}) async {
+    _dueStartDate = startDate;
+    _dueEndDate = endDate;
+    try {
+      await _loadUnsettledTransactions(endDate: endDate, startDate: startDate);
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+    // finally {
+    //   _isLoading = false;
+    //   notifyListeners();
+    // }
   }
 
   // Settled transactions loaded are from current month only.
   Future<void> _loadSettledTransactions(
       {DateTime? startDate, DateTime? endDate}) async {
-    _isLoading = true;
-    notifyListeners();
-
     try {
+      _parentAccount =
+          await _accountRepository.getSingleAccount(_parentAccount!);
       final parentId = _parentAccount!.id!;
 
       // Get the sum of settled transactions until the end of the month
       _parentAccountSettled = await _transactionRepository
           .getSettledTransactionsSum(
-              accountIds: [parentId],
-              endDate: endDate,
-              startDate: startDate);
+              accountIds: [parentId], endDate: endDate, startDate: startDate);
 
       // Get transactions
       _settledTransactions =
@@ -79,17 +104,11 @@ class AccountDetailViewmodel extends ChangeNotifier {
       );
     } catch (e) {
       rethrow;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
     }
   }
 
   Future<void> _loadUnsettledTransactions(
       {DateTime? startDate, DateTime? endDate}) async {
-    _isLoading = true;
-    notifyListeners();
-
     try {
       final parentId = _parentAccount!.id!;
 
@@ -121,9 +140,47 @@ class AccountDetailViewmodel extends ChangeNotifier {
       );
     } catch (e) {
       rethrow;
-    } finally {
-      _isLoading = false;
+    }
+  }
+
+  void applySettledFilter({DateTime? startDate, DateTime? endDate}) async {
+    _settledStartDate = startDate;
+    _settledEndDate = endDate;
+    try {
+      await _loadSettledTransactions(endDate: endDate, startDate: startDate);
       notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  String accountNameOfId(int accountId) {
+    final account = accountId == _parentAccount?.id
+        ? _parentAccount!
+        : _childAccountsList.where((a) => a.id == accountId).firstOrNull;
+    return account?.name ?? 'Unknown';
+  }
+
+  Future<void> deleteTransaction(Transaction tx) async {
+    try {
+      if (tx.id == null) throw Exception('Transaction no found');
+      await _transactionRepository.deleteTransaction(tx.id!);
+      await _loadUnsettledTransactions(startDate: _dueStartDate, endDate:  _dueEndDate);
+      await _loadSettledTransactions(startDate: _settledStartDate, endDate:  _settledEndDate);
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> markTransactionAsSettled(Transaction tx) async {
+    try {
+      await _transactionRepository.markTransactionAsSettled(tx);
+      await _loadUnsettledTransactions(startDate: _dueStartDate, endDate:  _dueEndDate);
+      await _loadSettledTransactions(startDate: _settledStartDate, endDate:  _settledEndDate);
+      notifyListeners();
+    } catch (e) {
+      rethrow;
     }
   }
 }
