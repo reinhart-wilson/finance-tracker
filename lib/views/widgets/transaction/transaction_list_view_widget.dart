@@ -65,7 +65,7 @@ class TransactionItemTile extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 2),
       color: !isSettled
           ? Colors.orange.withOpacity(0.05)
-          : Colors.white.withOpacity(0.4),
+          : const Color.fromARGB(255, 240, 228, 255).withOpacity(0.4),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),

@@ -27,7 +27,7 @@ ListView buildChildAccountItem(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12), // sudut melingkar
           child: Container(
-            width: 120, // lebar tiap box, biar konsisten
+            width: 135, // lebar tiap box, biar konsisten
             color: index % 2 == 0
                 ? theme.colorScheme.surface
                 : Theme.of(context).colorScheme.onPrimary,
