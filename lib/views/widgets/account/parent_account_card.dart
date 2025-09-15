@@ -1,4 +1,5 @@
 import 'package:finance_tracker/models/account.dart';
+import 'package:finance_tracker/themes/app_sizes.dart';
 import 'package:finance_tracker/utils/formatter.dart';
 import 'package:flutter/material.dart';
 
@@ -28,9 +29,10 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
     final theme = Theme.of(context);
 
     return Card(
+      color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      elevation: 2,
+      elevation: 3,
       child: Column(
         children: [
           // Parent row (tappable + chevron)
@@ -47,10 +49,11 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
                       children: [
                         Text(
                           widget.parentAccount.name,
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                         Text(
-                          'Balance: ${formatCurrency(widget.parentAccount.balance)}',
+                          '${formatCurrency(widget.parentAccount.balance)}',
                           style: theme.textTheme.bodySmall,
                         ),
                       ],
@@ -73,7 +76,10 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
 
           // Divider between parent and children
           if (_expanded && widget.childAccounts.isNotEmpty)
-            const Divider(height: 1),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
+              child: Divider(height: 1),
+            ),
 
           // Expanded children
           if (_expanded)
@@ -82,13 +88,39 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
 
               return Column(
                 children: [
-                  if (i > 0) const Divider(height: 1),
+                   
+                  if (i > 0)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: AppSizes.paddingMedium),
+                      child: Divider(height: 1),
+                    ),
                   ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                    title: Text(child.name),
-                    subtitle: Text('Balance: ${formatCurrency(child.balance)}'),
+                    contentPadding: EdgeInsets.zero,
+                    title: Row(
+                      children: [
+                        // Left color strip
+                        SizedBox(
+                          width: 30,
+                        ),
+                        // Text and content
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(child.name),
+                              Text(
+                                'Balance: ${formatCurrency(child.balance)}',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                     onTap: () => widget.onChildTap?.call(child),
                   ),
+                  if (i == widget.childAccounts.length - 1) SizedBox(height: AppSizes.paddingSmall,)
                 ],
               );
             }),
