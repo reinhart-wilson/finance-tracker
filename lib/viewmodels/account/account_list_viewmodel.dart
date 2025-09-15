@@ -40,7 +40,7 @@ class AccountListViewmodel extends ChangeNotifier {
   double _balanceGrowth = 0;
 
   /// Getters
-  List<Account> get accountList => _accountList.filtered(_filterCallback);
+  List<Account> get accountList => _accountList;
   bool get isLoading => _isLoading;
   double get totalBalance => _totalBalance;
   double get unsettledSum => _unsettledSum;
@@ -65,14 +65,8 @@ class AccountListViewmodel extends ChangeNotifier {
   Future<void> insertAccount(Account account) async {
     try {
       _isLoading = true;
-
       notifyListeners();
-      int id = await _accountRepository.addAccount(account);
-      final newAccount = account.copyWith(id: id);
-      _accountList.add(newAccount);
-      _accountList.sort((a, b) => a.name.compareTo(b.name));
-
-      notifyListeners();
+      await _accountRepository.addAccount(account);
     } catch (e) {
       rethrow;
     } finally {
