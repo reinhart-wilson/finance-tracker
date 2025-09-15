@@ -76,7 +76,7 @@ class LocalDataService {
     List<int>? categoryId,
     DatabaseExecutor? txn,
   }) async {
-    final db = txn?? await database;
+    final db = txn ?? await database;
 
     // Start building the SQL and parameters
     String sql = 'SELECT SUM(amount) AS total FROM transactions t';
@@ -247,6 +247,16 @@ class LocalDataService {
         throw Exception("Failed to update parent account balance");
       }
     }
+  }
+
+  Future<double> getTotalBalance() async {
+    final db = await database;
+    final result =
+        await db.rawQuery('SELECT sum(balance) AS total FROM accounts WHERE parent_id IS NULL');
+    if (result.isNotEmpty && result.first['total'] != null) {
+      return result.first['total'] as double; // SUM() often returns a double
+    }
+    return 0;
   }
 
   /// Inserts a transaction and updates account balances if settled
@@ -465,8 +475,9 @@ class LocalDataService {
     return result;
   }
 
-  Future<Map<String, dynamic>> fetchSingleTransaction(int transactionId, {DatabaseExecutor? txn}) async {
-    final db = txn??await database;
+  Future<Map<String, dynamic>> fetchSingleTransaction(int transactionId,
+      {DatabaseExecutor? txn}) async {
+    final db = txn ?? await database;
 
     final result = await db.query(
       'transactions',
@@ -491,8 +502,9 @@ class LocalDataService {
   // }
 
   /// Helper to get account IDs including sub-accounts
-  Future<List<int>> _getAccountIdsIncludingChildren(int accountId, {DatabaseExecutor? txn}) async {
-    final db = txn??await database;
+  Future<List<int>> _getAccountIdsIncludingChildren(int accountId,
+      {DatabaseExecutor? txn}) async {
+    final db = txn ?? await database;
 
     // Ambil id sendiri + subakun (parent_id = accountId)
     final rows = await db.query(
@@ -510,17 +522,15 @@ class LocalDataService {
     try {
       final db = await database;
       db.transaction((txn) async {
-        var transactionData = await fetchSingleTransaction(transactionId, txn: txn);
+        var transactionData =
+            await fetchSingleTransaction(transactionId, txn: txn);
 
-        await _updateAccountBalances( txn,
-            transactionData["account_id"], transactionData["amount"]);
+        await _updateAccountBalances(
+            txn, transactionData["account_id"], transactionData["amount"]);
 
         await txn.update(
-          'transactions',
-          {'settled_date': DateTime.now().toIso8601String()},
-          where: 'id = ?',
-          whereArgs: [transactionId]
-        );
+            'transactions', {'settled_date': DateTime.now().toIso8601String()},
+            where: 'id = ?', whereArgs: [transactionId]);
       });
     } catch (e) {
       rethrow;
@@ -633,7 +643,8 @@ class LocalDataService {
 
     db.transaction((txn) async {
       // Step 1: Update balances from both sub and main (if any) account
-      final amount = await getSettledTransactionSum(accountIds: [accountId], txn: txn);
+      final amount =
+          await getSettledTransactionSum(accountIds: [accountId], txn: txn);
       await _updateAccountBalances(txn, accountId, amount);
 
       /// Step 2: Delete transaction from transaction table

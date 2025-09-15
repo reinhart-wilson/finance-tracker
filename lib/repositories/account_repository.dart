@@ -11,13 +11,22 @@ class AccountRepository with ChangeNotifier {
 
   final LocalDataService _localDataService;
 
+  Future<double> getTotalBalance() async {
+    try {
+      return await _localDataService.getTotalBalance();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<List<Account>> getAllAccounts() async {
     final accountMaps = await _localDataService.fetchAccounts();
     return accountMaps.map((accountMap) => accountMap.fromMap()).toList();
   }
 
-    Future<Account> getSingleAccount(Account account) async {
-    final foundAccount = await _localDataService.fetchSingleAccount(account.id!);
+  Future<Account> getSingleAccount(Account account) async {
+    final foundAccount =
+        await _localDataService.fetchSingleAccount(account.id!);
     return foundAccount.fromMap();
   }
 
@@ -41,7 +50,8 @@ class AccountRepository with ChangeNotifier {
   }
 
   Future<List<Account>> getChildAccounts(int parentId) async {
-    final childAccounts = await _localDataService.fetchAccounts(parentId: parentId);
+    final childAccounts =
+        await _localDataService.fetchAccounts(parentId: parentId);
     return childAccounts.map((account) => account.fromMap()).toList();
   }
 }
