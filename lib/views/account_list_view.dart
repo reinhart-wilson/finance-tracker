@@ -2,6 +2,7 @@ import 'package:finance_tracker/models/account.dart';
 import 'package:finance_tracker/themes/app_sizes.dart';
 import 'package:finance_tracker/utils/formatter.dart';
 import 'package:finance_tracker/views/account_detail_view.dart';
+import 'package:finance_tracker/views/widgets/account/parent_account_card.dart';
 import 'package:flutter/material.dart';
 import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:finance_tracker/viewmodels/account/account_list_viewmodel.dart';
@@ -158,7 +159,7 @@ class AccountListView extends StatelessWidget {
                                       ),
                                       const SizedBox(width: 4),
                                       Icon(
-                                        Icons.schedule, // 👈 recommended icon
+                                        Icons.schedule,
                                         size: 14,
                                         color: theme.colorScheme.onPrimary,
                                       ),
@@ -238,84 +239,55 @@ class AccountListView extends StatelessWidget {
                       ]),
                 ),
               ),
-              Consumer<AccountListViewmodel>(
-                  builder: (context, viewModel, child) {
-                if (viewModel.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+              SizedBox(
+                height: AppSizes.paddingMedium,
+              ),
+              Text(
+                "Your Accounts",
+                style: GoogleFonts.manrope(
+                    textStyle: theme.textTheme.titleMedium,
+                    fontWeight: FontWeight.w600),
+              ),
+              Selector<AccountListViewmodel, List<Account>>(
+                selector: (_, vm) => vm.accountList,
+                builder: (context, accounts, _) {
+                  final parentAccounts =
+                      accounts.where((acc) => acc.parentId == null).toList();
+                  final childAccounts = getChildren(accounts);
 
-                final accounts = viewModel.accountList;
-                final treeRoot = TreeNode.root();
-                _buildTree(treeRoot, accounts);
+                  return Expanded(
+                    child: ListView.builder(
+                        itemCount: parentAccounts.length,
+                        itemBuilder: (context, index) {
+                          final parent = parentAccounts[index];
+                          final children = childAccounts[parent.id] ?? [];
 
-                return Expanded(
-                  child: TreeView.simple(
-                      tree: treeRoot,
-                      showRootNode: false,
-                      expansionIndicatorBuilder: (context, node) =>
-                          ChevronIndicator.rightDown(
-                            tree: node,
-                            color: theme.colorScheme.primary,
-                            padding: const EdgeInsets.all(8),
-                          ),
-                      indentation: const Indentation(
-                        style: IndentStyle.none,
-                        width: 16,
-                      ),
-                      onTreeReady: (controller) {
-                        controller.expandAllChildren(treeRoot);
-                      },
-                      builder: (context, node) {
-                        final account = node.data;
-                        final isRoot = account == null;
-
-                        return Card(
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          elevation: 0,
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12),
-                            onTap: () {
-                              Navigator.of(context).push(
+                          return ParentAccountCard(
+                            parentAccount: parent,
+                            childAccounts: children,
+                            onParentTap: (account) {
+                              Navigator.push(
+                                context,
                                 MaterialPageRoute(
                                   builder: (_) => const AccountDetailView(),
-                                  settings: RouteSettings(arguments: node.data),
+                                  settings: RouteSettings(arguments: account),
                                 ),
                               );
                             },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    isRoot ? 'Accounts' : account.name,
-                                    style:
-                                        theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: theme.colorScheme.onBackground,
-                                    ),
-                                  ),
-                                  if (!isRoot) const SizedBox(height: 4),
-                                  if (!isRoot)
-                                    Text(
-                                      'Balance: ${formatBalance(account.balance)}',
-                                      style:
-                                          theme.textTheme.bodySmall?.copyWith(
-                                        color:
-                                            theme.colorScheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                );
-              })
+                            onChildTap: (account) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const AccountDetailView(),
+                                  settings: RouteSettings(arguments: account),
+                                ),
+                              );
+                            },
+                          );
+                        }),
+                  );
+                },
+              ),
             ],
           ),
         ),
@@ -367,4 +339,15 @@ void _buildTree(TreeNode treeRoot, List<Account> accounts) {
     parentNode.addAll(children);
     treeRoot.add(parentNode);
   }
+}
+
+Map<int, List<Account>> getChildren(List<Account> accounts) {
+  final Map<int, List<Account>> childrenMap = {};
+  for (final acc in accounts) {
+    if (acc.parentId != null) {
+      childrenMap.putIfAbsent(acc.parentId!, () => []).add(acc);
+    }
+  }
+
+  return childrenMap;
 }
