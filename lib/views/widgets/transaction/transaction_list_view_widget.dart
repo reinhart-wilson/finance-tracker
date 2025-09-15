@@ -26,7 +26,6 @@ class TransactionListViewWidget extends StatelessWidget {
       shrinkWrap: true,
       physics:
           disableScrollPhysics ? const NeverScrollableScrollPhysics() : null,
-      padding: const EdgeInsets.all(AppSizes.paddingSmall),
       itemCount: transactions.length,
       itemBuilder: (context, index) {
         final tx = transactions[index];

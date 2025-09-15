@@ -1,4 +1,5 @@
 import 'package:finance_tracker/models/transaction/transaction.dart';
+import 'package:finance_tracker/themes/app_sizes.dart';
 import 'package:finance_tracker/viewmodels/transaction/transaction_list_viewmodel.dart';
 import 'package:finance_tracker/views/transaction_form_view.dart';
 import 'package:finance_tracker/views/widgets/transaction/transaction_action_dialog.dart';
@@ -26,12 +27,21 @@ class TransactionListView extends StatelessWidget {
             );
           },
           child: const Icon(Icons.add)),
-      appBar: AppBar(title: const Text("Transactions")),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        scrolledUnderElevation: 0,
+        title: const Text("Transactions"),
+        automaticallyImplyLeading: false,
+        actions: <Widget>[
+          // Providing an empty Container in actions ensures no default endDrawer icon appears.
+          Container(),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
+        child: Column(
+          children: [
+            Row(
               children: [
                 Expanded(
                     child: TextField(
@@ -59,30 +69,36 @@ class TransactionListView extends StatelessWidget {
                 }),
               ],
             ),
-          ),
-          Expanded(
-            child: Selector<TransactionListViewmodel, List<Transaction>>(
-              selector: (_, vm) => vm.filteredTransactions,
-              builder: (context, filteredTransactions, child) {
-                final vm = context.read<TransactionListViewmodel>();
-                return TransactionListViewWidget(
-                    transactions: filteredTransactions,
-                    getAccountNameCallback: (tx) =>
-                        vm.accountNameOfId(tx.accountId),
-                    getSubtitleCallback: (tx, accountName) =>
-                        '${accountName}: ${tx.category}',
-                    onLongPressCallback: (tx) async {
-                      showDialog(
-                          context: context,
-                          builder: (context) => TransactionActionDialog(
-                              tx: tx,
-                              onDelete: vm.deleteTransaction,
-                              onMarkSettled: vm.markTransactionAsSettled));
-                    });
-              },
+            const SizedBox(
+              height: AppSizes.paddingSmall,
             ),
-          )
-        ],
+            Expanded(
+              child: Selector<TransactionListViewmodel, List<Transaction>>(
+                selector: (_, vm) => vm.filteredTransactions,
+                builder: (context, filteredTransactions, child) {
+                  final vm = context.read<TransactionListViewmodel>();
+                  return TransactionListViewWidget(
+                      transactions: filteredTransactions,
+                      getAccountNameCallback: (tx) =>
+                          vm.accountNameOfId(tx.accountId),
+                      getSubtitleCallback: (tx, accountName) =>
+                          '${accountName}: ${tx.category}',
+                      onLongPressCallback: (tx) async {
+                        showDialog(
+                            context: context,
+                            builder: (context) => TransactionActionDialog(
+                                tx: tx,
+                                onDelete: vm.deleteTransaction,
+                                onMarkSettled: vm.markTransactionAsSettled));
+                      });
+                },
+              ),
+            ),
+            SizedBox(
+              height: AppSizes.paddingSmall,
+            )
+          ],
+        ),
       ),
     );
   }

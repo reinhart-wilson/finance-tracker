@@ -17,7 +17,7 @@ class TransactionListViewmodel extends ChangeNotifier {
     // By default loads all transactions settled in the current month or
     // still due up to current month.
     final now = DateTime.now();
-    final firstDayOfMonth = now.subtract(const Duration(days:30));
+    final firstDayOfMonth = now.subtract(const Duration(days: 30));
     final lastDayOfMonth = now;
     _filter = TransactionFilter(
         startDate: firstDayOfMonth,
@@ -71,35 +71,55 @@ class TransactionListViewmodel extends ChangeNotifier {
   Future<void> _loadTransactions() async {
     _isLoading = true;
     notifyListeners();
+
     final List<int>? accountIds =
         _filter.accounts?.map((account) => account.id!).toList();
     final List<int>? categoryIds =
         _filter.categories?.map((category) => category.id!).toList();
+
     try {
-      _settledTransactions = await _txRepository.getSettledTransactions(
+      // Only load SETTLED if not explicitly excluding them
+      if (_filter.completion == null || _filter.completion == 'settled') {
+        _settledTransactions = await _txRepository.getSettledTransactions(
           startDate: _filter.startDate,
           endDate: _filter.endDate,
           accountIds: accountIds,
           transactionType: _filter.transactionType,
-          categoryId: categoryIds);
-      _unsettledTransactions = await _txRepository.getUnsettledTransactions(
-          startDate: _filter.loadPreviouslyUnsettled ? null : _filter.startDate,
-          endDate: _filter.endDate,
-          accountIds: accountIds,
-          transactionType: _filter.transactionType,
-          categoryId: categoryIds);
-      _settledSum = await _txRepository.getSettledTransactionsSum(
+          categoryId: categoryIds,
+        );
+        _settledSum = await _txRepository.getSettledTransactionsSum(
           startDate: _filter.startDate,
           endDate: _filter.endDate,
           accountIds: accountIds,
           transactionType: _filter.transactionType,
-          categoryId: categoryIds);
-      _unsettledSum = await _txRepository.getUnsettledTransactionsSum(
+          categoryId: categoryIds,
+        );
+      } else {
+        _settledTransactions = [];
+        _settledSum = 0;
+      }
+
+      // Only load UNSETTLED if not explicitly excluding them
+      if (_filter.completion == null || _filter.completion == 'unsettled') {
+        _unsettledTransactions = await _txRepository.getUnsettledTransactions(
           startDate: _filter.loadPreviouslyUnsettled ? null : _filter.startDate,
           endDate: _filter.endDate,
           accountIds: accountIds,
           transactionType: _filter.transactionType,
-          categoryId: categoryIds);
+          categoryId: categoryIds,
+        );
+        _unsettledSum = await _txRepository.getUnsettledTransactionsSum(
+          startDate: _filter.loadPreviouslyUnsettled ? null : _filter.startDate,
+          endDate: _filter.endDate,
+          accountIds: accountIds,
+          transactionType: _filter.transactionType,
+          categoryId: categoryIds,
+        );
+      } else {
+        _unsettledTransactions = [];
+        _unsettledSum = 0;
+      }
+
       _applySearch();
     } catch (e) {
       rethrow;
