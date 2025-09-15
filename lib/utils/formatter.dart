@@ -3,6 +3,14 @@ import 'package:intl/intl.dart';
 String formatDate(DateTime dateTime) =>
     DateFormat('dd-MM-yyyy').format(dateTime);
 
+String formatPercentage(double percentage) {
+  final percentFormatter = NumberFormat.percentPattern()
+    ..minimumFractionDigits = 0
+    ..maximumFractionDigits = 2;
+  String formatted = percentFormatter.format(percentage);
+  return (formatted);
+}
+
 String formatCurrency(
   double balance, {
   bool includeCurrency = true,
@@ -14,13 +22,19 @@ String formatCurrency(
     final absValue = balance.abs();
 
     if (absValue >= 1000000000) {
-      formatted = (absValue / 1000000000).toStringAsFixed(3) + 'b';
+      double truncated = (absValue / 1000000000);
+      truncated = (truncated * 1000).floor() / 1000; // truncate to 3 decimals
+      formatted = '${truncated.toStringAsFixed(3)}b';
     } else if (absValue >= 1000000) {
-      formatted = (absValue / 1000000).toStringAsFixed(2) + 'm';
+      double truncated = (absValue / 1000000);
+      truncated = (truncated * 1000).floor() / 1000;
+      formatted = '${truncated.toStringAsFixed(3)}m';
     } else if (absValue >= 1000) {
-      formatted = (absValue / 1000).toStringAsFixed(1) + 'k';
+      double truncated = (absValue / 1000);
+      truncated = (truncated * 10).floor() / 10; // truncate to 1 decimal
+      formatted = '${truncated.toStringAsFixed(1)}k';
     } else {
-      formatted = absValue.toStringAsFixed(0);
+      formatted = absValue.floor().toString();
     }
   } else {
     final formatter = NumberFormat("#,###", "id_ID");

@@ -1,4 +1,6 @@
 import 'package:finance_tracker/models/account.dart';
+import 'package:finance_tracker/themes/app_sizes.dart';
+import 'package:finance_tracker/utils/formatter.dart';
 import 'package:finance_tracker/views/account_detail_view.dart';
 import 'package:flutter/material.dart';
 import 'package:animated_tree_view/animated_tree_view.dart';
@@ -29,71 +31,293 @@ class AccountListView extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
             title: Text(
-          "Your Accounts",
-          style: GoogleFonts.manrope(textStyle: theme.textTheme.titleLarge, fontWeight: FontWeight.w600),
+          "Overview",
+          style: GoogleFonts.manrope(
+              textStyle: theme.textTheme.titleLarge,
+              fontWeight: FontWeight.w600),
         )),
-        body: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Consumer<AccountListViewmodel>(
-                builder: (context, viewModel, child) {
-              if (viewModel.isLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              final accounts = viewModel.accountList;
-              final treeRoot = TreeNode.root();
-              _buildTree(treeRoot, accounts);
-
-              return Expanded(
-                child: TreeView.simple(
-                  tree: treeRoot,
-                  showRootNode: false,
-                  expansionIndicatorBuilder: (context, node) =>
-                      ChevronIndicator.rightDown(
-                    tree: node,
-                    color: theme.colorScheme.primary,
-                    padding: const EdgeInsets.all(8),
-                  ),
-                  indentation:
-                      const Indentation(style: IndentStyle.scopingLine),
-                  onTreeReady: (controller) {
-                    controller.expandAllChildren(treeRoot);
-                  },
-                  builder: (context, node) => ListTile(
-                    onTap: () {
-                      Navigator.of(context, rootNavigator: false).push(
-                        MaterialPageRoute(
-                          builder: (_) => const AccountDetailView(),
-                          settings: RouteSettings(arguments: node.data),
+        body: Padding(
+          padding:
+              const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Card(
+                elevation: 0,
+                color: theme.colorScheme.primary,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSizes.paddingMedium),
+                  child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Total Balance',
+                              textAlign: TextAlign.start,
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: theme.colorScheme.onPrimary,
+                              ),
+                            ),
+                            const SizedBox(width: 4), // optional spacing
+                            Icon(
+                              Icons.wallet,
+                              size: 16,
+                              color: theme.colorScheme.onPrimary,
+                            ),
+                          ],
                         ),
-                      );
-                    },
-                    title:
-                        Text(node.data == null ? 'Accounts' : node.data.name),
-                    subtitle: node.data == null
-                        ? null
-                        : Text('Balance: ${formatBalance(node.data.balance)}'),
-                    // onLongPress: ,
-                    // trailing: IconButton(
-                    //     onPressed: !viewModel.isLoading
-                    //         ? () async {
-                    //             try {
-                    //               await viewModel.deleteAccount(node.data.id);
-                    //             } catch (e) {
-                    //               if (!context.mounted) return;
-                    //               ScaffoldMessenger.of(context).showSnackBar(
-                    //                 SnackBar(content: Text('Deletion failed: $e')),
-                    //               );
-                    //             }
-                    //           }
-                    //         : null,
-                    //     icon: const Icon(Icons.delete, color: Colors.red)),
-                  ),
+                        Selector<AccountListViewmodel, double>(
+                          selector: (_, vm) => vm.totalBalance,
+                          builder: (context, totalBalance, _) {
+                            return RichText(
+                                text: TextSpan(
+                              text: "Rp ",
+                              style: theme.textTheme.displaySmall?.copyWith(
+                                  fontSize:
+                                      theme.textTheme.titleMedium?.fontSize,
+                                  color: theme.colorScheme.onPrimary),
+                              children: [
+                                TextSpan(
+                                  text: formatCurrency(totalBalance,
+                                      includeCurrency: false),
+                                  style: GoogleFonts.manrope(
+                                      fontWeight: FontWeight.w600,
+                                      color: totalBalance < 0
+                                          ? Colors.red
+                                          : theme.colorScheme.onPrimary,
+                                      textStyle: theme.textTheme.headlineSmall),
+                                ),
+                              ],
+                            ));
+                          },
+                        ),
+                        Selector<AccountListViewmodel, double>(
+                            selector: (_, vm) => vm.balanceGrowth,
+                            builder: (_, growth, __) {
+                              Color color;
+                              IconData icon;
+                              if (growth > 0) {
+                                color = Colors.green;
+                                icon = Icons.trending_up;
+                              } else if (growth < 0) {
+                                color = Colors.red;
+                                icon = Icons.trending_down;
+                              } else {
+                                color = Colors.grey;
+                                icon = Icons.trending_neutral;
+                              }
+
+                              return Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    icon,
+                                    size: theme.textTheme.labelMedium?.fontSize,
+                                    color: color,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  RichText(
+                                    text: TextSpan(
+                                        text: formatPercentage(growth),
+                                        style: theme.textTheme.labelMedium
+                                            ?.copyWith(color: color),
+                                        children: [
+                                          TextSpan(text: ' from last month')
+                                        ]),
+                                  ),
+                                ],
+                              );
+                            }),
+                        const SizedBox(
+                          height: AppSizes.paddingSmall,
+                        ),
+                        Divider(
+                          thickness: 1,
+                          height: AppSizes.paddingLarge,
+                          color: theme.colorScheme.surface,
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Total Due',
+                                        textAlign: TextAlign.start,
+                                        style: theme.textTheme.labelMedium
+                                            ?.copyWith(
+                                          color: theme.colorScheme.onPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Icon(
+                                        Icons.schedule, // 👈 recommended icon
+                                        size: 14,
+                                        color: theme.colorScheme.onPrimary,
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(
+                                    height: AppSizes.paddingMini,
+                                  ),
+                                  Selector<AccountListViewmodel, double>(
+                                      selector: (_, vm) => vm.unsettledSum,
+                                      builder: (__, unsettledSum, _) => Text(
+                                            formatCurrency(unsettledSum,
+                                                shorten: true),
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                color: unsettledSum < 0
+                                                    ? Colors.red
+                                                    : theme
+                                                        .colorScheme.onPrimary),
+                                          )),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              height: 40,
+                              child: VerticalDivider(
+                                width: AppSizes.paddingLarge,
+                                thickness: 1,
+                                color: theme.colorScheme.surface,
+                              ),
+                            ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Proj. Balance',
+                                        textAlign: TextAlign.start,
+                                        style: theme.textTheme.labelMedium
+                                            ?.copyWith(
+                                          color: theme.colorScheme.onPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Icon(
+                                        Icons
+                                            .trending_up, // 👈 recommended icon
+                                        size: 14,
+                                        color: theme.colorScheme.onPrimary,
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(
+                                    height: AppSizes.paddingMini,
+                                  ),
+                                  Selector<AccountListViewmodel, double>(
+                                      selector: (_, vm) => vm.projectedBalance,
+                                      builder: (__, projectedBalance, _) =>
+                                          Text(
+                                            formatCurrency(projectedBalance,
+                                                shorten: true),
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                color: projectedBalance < 0
+                                                    ? Colors.red
+                                                    : theme
+                                                        .colorScheme.onPrimary),
+                                          )),
+                                ],
+                              ),
+                            ),
+                          ],
+                        )
+                      ]),
                 ),
-              );
-            }),
-          ],
+              ),
+              Consumer<AccountListViewmodel>(
+                  builder: (context, viewModel, child) {
+                if (viewModel.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final accounts = viewModel.accountList;
+                final treeRoot = TreeNode.root();
+                _buildTree(treeRoot, accounts);
+
+                return Expanded(
+                  child: TreeView.simple(
+                      tree: treeRoot,
+                      showRootNode: false,
+                      expansionIndicatorBuilder: (context, node) =>
+                          ChevronIndicator.rightDown(
+                            tree: node,
+                            color: theme.colorScheme.primary,
+                            padding: const EdgeInsets.all(8),
+                          ),
+                      indentation: const Indentation(
+                        style: IndentStyle.none,
+                        width: 16,
+                      ),
+                      onTreeReady: (controller) {
+                        controller.expandAllChildren(treeRoot);
+                      },
+                      builder: (context, node) {
+                        final account = node.data;
+                        final isRoot = account == null;
+
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          elevation: 0,
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const AccountDetailView(),
+                                  settings: RouteSettings(arguments: node.data),
+                                ),
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isRoot ? 'Accounts' : account.name,
+                                    style:
+                                        theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: theme.colorScheme.onBackground,
+                                    ),
+                                  ),
+                                  if (!isRoot) const SizedBox(height: 4),
+                                  if (!isRoot)
+                                    Text(
+                                      'Balance: ${formatBalance(account.balance)}',
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                );
+              })
+            ],
+          ),
         ),
         floatingActionButton: FloatingActionButton(
             onPressed: () {

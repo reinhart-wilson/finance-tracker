@@ -10,13 +10,22 @@ class AccountListViewmodel extends ChangeNotifier {
       {required AccountRepository accountRepository,
       required TransactionRepository txnRepository})
       : _accountRepository = accountRepository,
-      _txnRepository = txnRepository{
+        _txnRepository = txnRepository {
     _loadAccounts();
+    _getAccountsBalanceSum();
+    _getUnsettledSum();
+    _getBalanceGrowth();
     _accountRepository.addListener(() {
-      _loadAccounts(); // atau refresh data
+      _loadAccounts(); //
+      _getAccountsBalanceSum();
+      _getUnsettledSum();
+      _getBalanceGrowth();
     });
-    _txnRepository.addListener((){
+    _txnRepository.addListener(() {
       _loadAccounts();
+      _getAccountsBalanceSum();
+      _getUnsettledSum();
+      _getBalanceGrowth();
     });
   }
 
@@ -26,9 +35,17 @@ class AccountListViewmodel extends ChangeNotifier {
   bool Function(Account)? _filterCallback;
   bool _isLoading = false;
 
-  /// Getter
+  double _totalBalance = 0;
+  double _unsettledSum = 0;
+  double _balanceGrowth = 0;
+
+  /// Getters
   List<Account> get accountList => _accountList.filtered(_filterCallback);
   bool get isLoading => _isLoading;
+  double get totalBalance => _totalBalance;
+  double get unsettledSum => _unsettledSum;
+  double get projectedBalance => _totalBalance + unsettledSum;
+  double get balanceGrowth => _balanceGrowth;
 
   /// Setter
   set filter(filterCallback) {
@@ -70,6 +87,55 @@ class AccountListViewmodel extends ChangeNotifier {
       notifyListeners();
       await _accountRepository.deleteAccount(accountId);
       _accountList.removeWhere((account) => account.id == accountId);
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _getAccountsBalanceSum() async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+      _totalBalance = await _accountRepository.getTotalBalance();
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _getUnsettledSum() async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+      _unsettledSum = await _txnRepository.getUnsettledTransactionsSum();
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _getBalanceGrowth() async {
+    // Last month
+    try {
+      _isLoading = true;
+      notifyListeners();
+      final now = DateTime.now();
+      final startLastMonth = DateTime(
+        now.year,
+        now.month - 1,
+        1,
+      );
+      final endLastMonth = DateTime(now.year, now.month, 0, 23, 59, 999);
+      final lastMonthSum = await _txnRepository.getSettledTransactionsSum(
+          startDate: startLastMonth, endDate: endLastMonth);
+      _balanceGrowth = lastMonthSum == 0 ? 1 : _totalBalance / lastMonthSum - 1;
     } catch (e) {
       rethrow;
     } finally {
