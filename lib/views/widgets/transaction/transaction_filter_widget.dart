@@ -62,7 +62,7 @@ class TransactionFilterWidgetState extends State<TransactionFilterWidget> {
 
     if (picked != null && picked != currentValue) {
       setState(() {
-        onDatePicked(picked); // ✅ update variabel yang sesuai
+        onDatePicked(picked);
       });
     }
   }
@@ -85,7 +85,11 @@ class TransactionFilterWidgetState extends State<TransactionFilterWidget> {
             _pickDate(
                 currentValue: _startDate,
                 onDatePicked: (date) {
-                  _startDate = date ?? _startDate;
+                  _startDate = date != null
+                      ? DateTime(
+                          date.year, date.month, date.day, 23, 59, 59, 999)
+                      : _startDate;
+                  
                 });
           },
         ),
@@ -102,7 +106,10 @@ class TransactionFilterWidgetState extends State<TransactionFilterWidget> {
             _pickDate(
                 currentValue: _endDate,
                 onDatePicked: (date) {
-                  _endDate = date ?? _endDate;
+                  _endDate = date != null
+                      ? DateTime(
+                          date.year, date.month, date.day, 23, 59, 59, 999)
+                      : _endDate;
                 });
           },
         ),
