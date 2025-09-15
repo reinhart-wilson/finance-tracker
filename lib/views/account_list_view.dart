@@ -31,12 +31,14 @@ class AccountListView extends StatelessWidget {
       ),
       child: Scaffold(
         appBar: AppBar(
+            backgroundColor: theme.colorScheme.surface,
+            scrolledUnderElevation: 0,
             title: Text(
-          "Overview",
-          style: GoogleFonts.manrope(
-              textStyle: theme.textTheme.titleLarge,
-              fontWeight: FontWeight.w600),
-        )),
+              "Overview",
+              style: GoogleFonts.manrope(
+                  textStyle: theme.textTheme.titleLarge,
+                  fontWeight: FontWeight.w600),
+            )),
         body: Padding(
           padding:
               const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
