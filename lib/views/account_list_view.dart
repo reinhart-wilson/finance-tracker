@@ -10,7 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:finance_tracker/views/widgets/account_form_widget.dart';
+import 'package:finance_tracker/views/widgets/account/account_form_widget.dart';
 
 class AccountListView extends StatelessWidget {
   const AccountListView({super.key});
@@ -42,6 +42,7 @@ class AccountListView extends StatelessWidget {
               const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Card(
                 elevation: 0,
@@ -325,8 +326,6 @@ void _buildTree(TreeNode treeRoot, List<Account> accounts) {
       data: parent,
       key: parent.id.toString(),
     );
-
-    debugPrint("Adding node");
 
     final children = accounts
         .where((account) => account.parentId == parent.id)
