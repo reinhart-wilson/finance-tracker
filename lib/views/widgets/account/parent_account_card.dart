@@ -31,8 +31,8 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
     return Card(
       color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      elevation: 3,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: AppSizes.paddingMini),
+      elevation: 0,
       child: Column(
         children: [
           // Parent row (tappable + chevron)
@@ -76,9 +76,9 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
 
           // Divider between parent and children
           if (_expanded && widget.childAccounts.isNotEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
-              child: Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
+              child: Divider(height: 1, color:  const Color.fromARGB(255, 240, 228, 255)),
             ),
 
           // Expanded children
@@ -93,7 +93,7 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
                     const Padding(
                       padding: EdgeInsets.symmetric(
                           horizontal: AppSizes.paddingMedium),
-                      child: Divider(height: 1),
+                      child: Divider(height: 1, color:   Color.fromARGB(255, 240, 228, 255)),
                     ),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
