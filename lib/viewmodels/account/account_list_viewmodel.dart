@@ -62,7 +62,7 @@ class AccountListViewmodel extends ChangeNotifier {
     final now = DateTime.now();
     await _loadUnsettledTransactionsSum(
         startDate: DateTime(now.year, now.month, 1),
-        endDate: DateTime(now.year, now.month+1, 0, 23, 59, 999));
+        endDate: DateTime(now.year, now.month + 1, 0, 23, 59, 999));
     _isLoading = false;
     notifyListeners();
   }
@@ -85,7 +85,6 @@ class AccountListViewmodel extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
       await _accountRepository.deleteAccount(accountId);
-      _accountList.removeWhere((account) => account.id == accountId);
     } catch (e) {
       rethrow;
     } finally {
@@ -117,8 +116,9 @@ class AccountListViewmodel extends ChangeNotifier {
         now.month,
         1,
       );
-      final endDate = DateTime(now.year, now.month+1, 0, 23, 59, 999);
-      _unsettledSum = await _txnRepository.getUnsettledTransactionsSum(startDate: startDate, endDate: endDate);
+      final endDate = DateTime(now.year, now.month + 1, 0, 23, 59, 999);
+      _unsettledSum = await _txnRepository.getUnsettledTransactionsSum(
+          startDate: startDate, endDate: endDate);
     } catch (e) {
       rethrow;
     } finally {
@@ -141,7 +141,12 @@ class AccountListViewmodel extends ChangeNotifier {
       final endLastMonth = DateTime(now.year, now.month, 0, 23, 59, 999);
       final lastMonthSum = await _txnRepository.getSettledTransactionsSum(
           startDate: startLastMonth, endDate: endLastMonth);
-      _balanceGrowth = lastMonthSum == 0 ? 1 : _totalBalance / lastMonthSum - 1;
+      if (lastMonthSum == 0) {
+        _balanceGrowth =
+            _totalBalance == 0 ? 0 : 1;
+      } else {
+        _balanceGrowth = _totalBalance / lastMonthSum - 1;
+      }
     } catch (e) {
       rethrow;
     } finally {
