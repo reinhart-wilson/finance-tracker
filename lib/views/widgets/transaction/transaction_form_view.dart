@@ -1,8 +1,9 @@
 import 'package:finance_tracker/models/account.dart';
 import 'package:finance_tracker/models/transaction/transaction.dart';
 import 'package:finance_tracker/models/transaction/transaction_category.dart';
+import 'package:finance_tracker/themes/app_sizes.dart';
 import 'package:finance_tracker/viewmodels/view_models.dart';
-import 'package:finance_tracker/views/widgets/transaction/category_form_widget.dart';
+import 'package:finance_tracker/views/widgets/transaction/category_form.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -24,11 +25,14 @@ class _TransactionFormViewState extends State<TransactionFormView> {
     super.initState();
     _vm = context.read<TransactionFormViewmodel>();
   }
-  
+
   final TextEditingController _titleController = TextEditingController();
   late TransactionFormViewmodel _vm;
   final dateFormat = DateFormat('dd/MM/yyyy');
   TransactionCategory? _selectedCategory;
+  final _addCategorySentinel = TransactionCategory(id: -1, name: '__none__');
+  final _noneCategorySentinel = TransactionCategory(id: -2, name: '__add__');
+
   Account? _selectedAccount;
   TransactionType? _type = TransactionType.income;
   DateTime _selectedTxDate = DateTime.now();
@@ -69,228 +73,318 @@ class _TransactionFormViewState extends State<TransactionFormView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    CategoryDropdown(
-                      selectedCategory: _selectedCategory,
-                      onChanged: (newCategory) async {
-                        if (newCategory == null) {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) =>
-                                    CategoryFormWidget()),
-                          );
-                          if (result is TransactionCategory) {
-                            setState(() {
-                              _vm.categories.add(result);
-                              _selectedCategory = result;
-                            });
-                          }
-                        } else {
-                          setState(() {
-                            _selectedCategory = newCategory;
-                            final defaultAccId = newCategory.defaultAccountId;
-                            if (defaultAccId != null) {
-                              _selectedAccount = _vm.accountList
-                                  .firstWhere((a) => a.id == defaultAccId);
-                            }
-                          });
-                        }
-                      },
-                    ),
-                    Selector<TransactionFormViewmodel, List<Account>>(
-                      selector: (_, vm) => vm.accountList,
-                      builder: (_, __, ___) => DropdownButtonFormField<Account>(
-                        value: _selectedAccount,
-                        items: [
-                          ..._vm.accountList.map((account) {
-                            return DropdownMenuItem<Account>(
-                              value: account,
-                              child: Text(account.name),
-                            );
-                          })
-                        ],
-                        onChanged: (Account? newValue) {
-                          setState(() {
-                            _selectedAccount = newValue;
-                          });
-                        },
-                        onSaved: (value) {
-                          _selectedAccount = value;
-                        },
-                        decoration: const InputDecoration(
-                          labelText: 'Mutated Account',
-                        ),
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: RadioListTile<TransactionType>(
-                            title: const Text("Income"),
-                            autofocus: true,
-                            value: TransactionType.income,
-                            groupValue: _type,
-                            onChanged: (value) {
-                              setState(() {
-                                _type = value;
-                              });
-                            },
-                          ),
-                        ),
-                        Expanded(
-                          child: RadioListTile<TransactionType>(
-                            title: const Text("Expense"),
-                            value: TransactionType.expense,
-                            groupValue: _type,
-                            onChanged: (value) {
-                              setState(() {
-                                _type = value;
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    TextFormField(
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: "Amount",
-                        prefixText: "Rp ",
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "Please fill out transaction amount.";
-                        }
-                        final number = double.tryParse(value);
-                        if (number == null || number <= 0) {
-                          return "Not a valid number.";
-                        }
-                        return null;
-                      },
-                      onSaved: (value) {
-                        // simpan ke model atau variabel
-                        _amount = double.parse(value!);
-                      },
-                    ),
-                    TextFormField(
-                      readOnly: true,
-                      controller: TextEditingController(
-                        text:
-                            "${_selectedTxDate.day}/${_selectedTxDate.month}/${_selectedTxDate.year}",
-                      ),
-                      decoration: const InputDecoration(
-                        labelText: "Transaction Date",
-                        suffixIcon: Icon(Icons.calendar_today),
-                      ),
-                      onTap: _pickTransactionDate,
-                    ),
-                    CheckboxListTile(
-                      value: _hasDueDate,
-                      onChanged: (val) {
-                        setState(() {
-                          _hasDueDate = val ?? false;
-                          if (!_hasDueDate) {
-                            _selectedDueDate = null; // reset kalau tidak due
-                          }
-                        });
-                      },
-                      title: const Text("This transaction is due"),
-                      controlAffinity: ListTileControlAffinity.leading,
-                    ),
+    final theme = Theme.of(context);
 
-                    // Input due date (hanya muncul kalau checkbox dicentang)
-                    if (_hasDueDate)
-                      TextFormField(
-                        readOnly: true,
-                        validator: (_) {
-                          if (_hasDueDate) {
-                            if (_selectedDueDate == null) {
-                              return "Please fill out date.";
-                            }
-                            if (_selectedTxDate.isAfter(_selectedDueDate!)) {
-                              return "Due date has to be after transaction date.";
-                            }
-                          }
-                          return null;
-                        },
-                        controller: TextEditingController(
-                          text: _selectedDueDate == null
-                              ? ""
-                              : dateFormat.format(_selectedDueDate!),
-                        ),
-                        decoration: const InputDecoration(
-                          labelText: "Due Date",
-                          suffixIcon: Icon(Icons.calendar_today),
-                        ),
-                        onTap: _pickDueDate,
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 24,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /// Title
+              Text(
+                'Record Transaction',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: AppSizes.paddingLarge),
+
+              /// Category Dropdown
+              CategoryDropdown(
+                addCategorySentinel: _addCategorySentinel,
+                noneCategorySentinel: _noneCategorySentinel,
+                selectedCategory: _selectedCategory,
+                onSaved: (newCategory) {
+                  setState(() {
+                    _selectedCategory = newCategory;
+                  });
+                },
+                onChanged: (newCategory) async {
+                  if (newCategory == _addCategorySentinel) {
+                    setState(() {
+                      _selectedCategory = _addCategorySentinel;
+                    });
+                    await showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => const CategoryForm(),
+                    );
+                    // fallback to sentinel "None"
+                    setState(() {
+                      _selectedCategory = _noneCategorySentinel;
+                    });
+                  } else {
+                    setState(() {
+                      _selectedCategory = newCategory;
+                      if (newCategory != null) {
+                        final defaultAccId = newCategory.defaultAccountId;
+                        _selectedAccount = defaultAccId == null
+                            ? null
+                            : _vm.accountList
+                                .firstWhere((a) => a.id == defaultAccId);
+                      }
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
+
+              /// Account Dropdown
+              DropdownButtonFormField<Account>(
+                value: _selectedAccount,
+                items: _vm.accountList
+                    .map((account) => DropdownMenuItem<Account>(
+                          value: account,
+                          child: Text(account.name),
+                        ))
+                    .toList(),
+                onChanged: (Account? newValue) {
+                  setState(() => _selectedAccount = newValue);
+                },
+                onSaved: (value) => _selectedAccount = value,
+                decoration: InputDecoration(
+                  labelText: 'Mutated Account',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              /// Transaction Type Radios
+              Text(
+                'Transaction Type',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Expanded(
+                    child: RadioListTile<TransactionType>(
+                      title: Text(
+                        "Income",
+                        style: Theme.of(context).textTheme.bodyLarge,
                       ),
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: const InputDecoration(
-                        labelText: "Remarks",
+                      value: TransactionType.income,
+                      groupValue: _type,
+                      onChanged: (value) => setState(() => _type = value),
+                      dense: true,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "Please fill out remarks.";
-                        }
-                        return null;
-                      },
-                      onSaved: (value) {
-                        // simpan ke model atau variabel
-                        _title = (value);
-                      }, 
                     ),
-                    ElevatedButton(
-                      onPressed: () async {
-                        if (_formKey.currentState!.validate()) {
-                          _formKey.currentState!.save();
-                          try {
-                            await _vm.insertTransaction(Transaction(
-                                title: _title!,
-                                amount: _type == TransactionType.income
-                                    ? _amount!
-                                    : -_amount!,
-                                accountId: _selectedAccount!.id!,
-                                date: _selectedTxDate,
-                                dueDate: _selectedDueDate,
-                                settledDate:
-                                    _hasDueDate ? null : _selectedDueDate,
-                                categoryId: _selectedCategory?.id));
-                            if (!mounted) return;
-                            Navigator.pop(context);
-                          } catch (e) {
-                            if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content:
-                                      Text('Gagal menyimpan transaksi: $e')),
-                            );
-                          }
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: RadioListTile<TransactionType>(
+                      title: Text(
+                        "Expense",
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      value: TransactionType.expense,
+                      groupValue: _type,
+                      onChanged: (value) => setState(() => _type = value),
+                      dense: true,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              /// Amount
+              TextFormField(
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: "Amount",
+                  prefixText: "Rp ",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Please fill out transaction amount.";
+                  }
+                  final number = double.tryParse(value);
+                  if (number == null || number <= 0) {
+                    return "Not a valid number.";
+                  }
+                  return null;
+                },
+                onSaved: (value) => _amount = double.parse(value!),
+              ),
+              const SizedBox(height: 16),
+
+              /// Transaction Date
+              TextFormField(
+                readOnly: true,
+                controller: TextEditingController(
+                  text: dateFormat.format(_selectedTxDate),
+                ),
+                decoration: InputDecoration(
+                  labelText: "Transaction Date",
+                  suffixIcon: const Icon(Icons.calendar_today),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                onTap: _pickTransactionDate,
+              ),
+              const SizedBox(height: 16),
+
+              /// Due Checkbox
+              CheckboxListTile(
+                value: _hasDueDate,
+                onChanged: (val) {
+                  setState(() {
+                    _hasDueDate = val ?? false;
+                    if (!_hasDueDate) _selectedDueDate = null;
+                  });
+                },
+                title: const Text("This transaction is due"),
+                controlAffinity: ListTileControlAffinity.leading,
+                contentPadding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+
+              /// Due Date
+              if (_hasDueDate)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: TextFormField(
+                    readOnly: true,
+                    controller: TextEditingController(
+                      text: _selectedDueDate == null
+                          ? ""
+                          : dateFormat.format(_selectedDueDate!),
+                    ),
+                    decoration: InputDecoration(
+                      labelText: "Due Date",
+                      suffixIcon: const Icon(Icons.calendar_today),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    validator: (_) {
+                      if (_hasDueDate) {
+                        if (_selectedDueDate == null) {
+                          return "Please fill out date.";
                         }
-                      },
-                      child: const Text('Tambah'),
-                    )
-                  ],
-                ))));
+                        if (_selectedTxDate.isAfter(_selectedDueDate!)) {
+                          return "Due date has to be after transaction date.";
+                        }
+                      }
+                      return null;
+                    },
+                    onTap: _pickDueDate,
+                  ),
+                ),
+              const SizedBox(height: 16),
+
+              /// Remarks
+              TextFormField(
+                controller: _titleController,
+                decoration: InputDecoration(
+                  labelText: "Remarks",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Please fill out remarks.";
+                  }
+                  return null;
+                },
+                onSaved: (value) => _title = value,
+              ),
+              const SizedBox(height: 24),
+
+              /// Submit Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      _formKey.currentState!.save();
+                      try {
+                        await _vm.insertTransaction(Transaction(
+                          title: _title!,
+                          amount: _type == TransactionType.income
+                              ? _amount!
+                              : -_amount!,
+                          accountId: _selectedAccount!.id!,
+                          date: _selectedTxDate,
+                          dueDate: _selectedDueDate,
+                          settledDate: _hasDueDate ? null : _selectedDueDate,
+                          categoryId: _selectedCategory == _addCategorySentinel
+                              ? null
+                              : _selectedCategory!.id,
+                        ));
+                        if (!mounted) return;
+                        Navigator.pop(context);
+                      } catch (e) {
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Failed recording transaction: $e'),
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.save),
+                  label: const Text('Tambah'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
 class CategoryDropdown extends StatelessWidget {
   final TransactionCategory? selectedCategory;
   final void Function(TransactionCategory?) onChanged;
+  final void Function(TransactionCategory?) onSaved;
+  final TransactionCategory noneCategorySentinel;
+  final TransactionCategory addCategorySentinel;
 
-  const CategoryDropdown({
-    super.key,
-    required this.selectedCategory,
-    required this.onChanged,
-  });
+  const CategoryDropdown(
+      {super.key,
+      required this.selectedCategory,
+      required this.onChanged,
+      required this.onSaved,
+      required this.noneCategorySentinel,
+      required this.addCategorySentinel});
 
   @override
   Widget build(BuildContext context) {
@@ -300,25 +394,35 @@ class CategoryDropdown extends StatelessWidget {
           DropdownButtonFormField<TransactionCategory?>(
         value: selectedCategory,
         items: [
+          DropdownMenuItem<TransactionCategory?>(
+            value: noneCategorySentinel, // "None" sentinel
+            child: const Text('None'),
+          ),
           ...categories.map(
             (c) => DropdownMenuItem(
               value: c,
               child: Text(c.name),
             ),
           ),
-          const DropdownMenuItem<TransactionCategory?>(
-            value: null,
-            child: Row(
+          DropdownMenuItem<TransactionCategory?>(
+            value: addCategorySentinel, // stable sentinel object
+            child: const Row(
               children: [
                 Icon(Icons.add, color: Colors.blue),
                 SizedBox(width: 8),
-                Text("Tambah"),
+                Text("Add category"),
               ],
             ),
           ),
         ],
         onChanged: onChanged,
-        decoration: const InputDecoration(labelText: "Kategori Transaksi"),
+        onSaved: onChanged,
+        decoration: InputDecoration(
+          labelText: 'Category',
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
       ),
     );
   }

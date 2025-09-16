@@ -20,6 +20,7 @@ class AccountListView extends StatelessWidget {
     return "Rp. ${formatter.format(balance)}";
   }
 
+  // TODO: show amount due per accout (if any)
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -153,7 +154,7 @@ class AccountListView extends StatelessWidget {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
-                                        'Total Due',
+                                        'Due this month',
                                         textAlign: TextAlign.start,
                                         style: theme.textTheme.labelMedium
                                             ?.copyWith(
@@ -173,16 +174,17 @@ class AccountListView extends StatelessWidget {
                                   ),
                                   Selector<AccountListViewmodel, double>(
                                       selector: (_, vm) => vm.unsettledSum,
-                                      builder: (__, unsettledSum, _) => Text(
-                                            formatCurrency(unsettledSum,
-                                                shorten: true),
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                color: unsettledSum < 0
-                                                    ? Colors.red
-                                                    : theme
-                                                        .colorScheme.onPrimary),
-                                          )),
+                                      builder: (__, unsettledSum, _) {
+                                        return Text(
+                                          formatCurrency(unsettledSum,
+                                              shorten: true),
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              color: unsettledSum < 0
+                                                  ? Colors.red
+                                                  : Colors.green),
+                                        );
+                                      }),
                                 ],
                               ),
                             ),
@@ -212,7 +214,7 @@ class AccountListView extends StatelessWidget {
                                       const SizedBox(width: 4),
                                       Icon(
                                         Icons
-                                            .trending_up, // 👈 recommended icon
+                                            .trending_up, 
                                         size: 14,
                                         color: theme.colorScheme.onPrimary,
                                       ),
@@ -223,17 +225,21 @@ class AccountListView extends StatelessWidget {
                                   ),
                                   Selector<AccountListViewmodel, double>(
                                       selector: (_, vm) => vm.projectedBalance,
-                                      builder: (__, projectedBalance, _) =>
-                                          Text(
-                                            formatCurrency(projectedBalance,
-                                                shorten: true),
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                color: projectedBalance < 0
-                                                    ? Colors.red
-                                                    : theme
-                                                        .colorScheme.onPrimary),
-                                          )),
+                                      builder: (context, projectedBalance, _) {
+                                        var color = projectedBalance < 0 ? Colors.red : Colors.green ;
+                                        // final totalBalance  = context.read<AccountListViewmodel>().totalBalance;
+                                        // if (projectedBalance < totalBalance ){
+                                        //   color = Colors.red;
+                                        // } else if ()
+                                        return Text(
+                                          formatCurrency(projectedBalance,
+                                              shorten: true),
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              color: color
+                                                ),
+                                        );
+                                      }),
                                 ],
                               ),
                             ),
@@ -291,6 +297,7 @@ class AccountListView extends StatelessWidget {
                   );
                 },
               ),
+              const SizedBox(height: AppSizes.paddingMedium,)
             ],
           ),
         ),
@@ -317,28 +324,6 @@ class AccountListView extends StatelessWidget {
             child: const Icon(Icons.add)),
       ),
     );
-  }
-}
-
-void _buildTree(TreeNode treeRoot, List<Account> accounts) {
-  treeRoot.clear();
-
-  for (var parent in accounts.where((a) => a.parentId == null)) {
-    final parentNode = TreeNode<Account>(
-      data: parent,
-      key: parent.id.toString(),
-    );
-
-    final children = accounts
-        .where((account) => account.parentId == parent.id)
-        .map((child) => TreeNode<Account>(
-              data: child,
-              key: child.id.toString(),
-            ))
-        .toList();
-
-    parentNode.addAll(children);
-    treeRoot.add(parentNode);
   }
 }
 
