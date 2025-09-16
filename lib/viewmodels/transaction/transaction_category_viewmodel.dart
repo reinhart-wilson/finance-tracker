@@ -52,7 +52,7 @@ class TransactionCategoryViewmodel extends ChangeNotifier {
     try {
       _isLoading = true;
       notifyListeners();
-      _categoryRepository.addTransactionCategory(category);
+      await _categoryRepository.addTransactionCategory(category);
     } catch (e) {
       rethrow;
     } finally {
