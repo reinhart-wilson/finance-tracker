@@ -475,6 +475,23 @@ class LocalDataService {
     return result;
   }
 
+  Future<List<Map<String, dynamic>>> fetchUnsettledSumPerAccount() async{
+    final db = await database;
+    final result = await db.rawQuery('''
+      SELECT 
+        t.account_id,
+        a.name,
+        SUM(amount) AS total_unsettled
+      FROM 
+        transactions t
+        JOIN accounts a
+        ON a.id = t.account_id
+      WHERE settled_date IS NULL
+      GROUP BY account_id, name
+    ''');
+    return result;
+  }
+
   Future<Map<String, dynamic>> fetchSingleTransaction(int transactionId,
       {DatabaseExecutor? txn}) async {
     final db = txn ?? await database;
