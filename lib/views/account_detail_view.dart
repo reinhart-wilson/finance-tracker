@@ -4,7 +4,7 @@ import 'package:finance_tracker/viewmodels/view_models.dart';
 import 'package:finance_tracker/views/widgets/nullable_date_field.dart';
 import 'package:finance_tracker/views/widgets/account/child_account_item_widget.dart';
 import 'package:finance_tracker/views/widgets/transaction/transaction_action_dialog.dart';
-import 'package:finance_tracker/views/widgets/transaction/transaction_list_view_widget.dart';
+import 'package:finance_tracker/views/widgets/transaction/transaction_list_item.dart';
 import 'package:flutter/material.dart';
 import 'package:finance_tracker/utils/formatter.dart';
 import 'package:flutter/services.dart';
@@ -257,7 +257,7 @@ class _AccountDetailContentState extends State<_AccountDetailContent> {
                     selector: (_, vm) => vm.settledTransactions,
                     builder: (context, settledTransactions, _) {
                       final vm = context.read<AccountDetailViewmodel>();
-                      return TransactionListViewWidget(
+                      return TransactionItem(
                           disableScrollPhysics: true,
                           transactions: settledTransactions,
                           getAccountNameCallback: (tx) =>
@@ -334,7 +334,7 @@ class _AccountDetailContentState extends State<_AccountDetailContent> {
                     selector: (_, vm) => vm.unsettledTransactions,
                     builder: (context, unsettledTransactions, _) {
                       final vm = context.read<AccountDetailViewmodel>();
-                      return TransactionListViewWidget(
+                      return TransactionItem(
                           disableScrollPhysics: true,
                           transactions: unsettledTransactions,
                           getAccountNameCallback: (tx) =>

@@ -4,14 +4,14 @@ import 'package:finance_tracker/views/widgets/transaction/transaction_detail_dia
 import 'package:flutter/material.dart';
 import 'package:finance_tracker/utils/formatter.dart';
 
-class TransactionListViewWidget extends StatelessWidget {
+class TransactionItem extends StatelessWidget {
   final List<Transaction> transactions;
   final String Function(Transaction) getAccountNameCallback;
   final String Function(Transaction tx, String accountName) getSubtitleCallback;
   final Future<void> Function(Transaction) onLongPressCallback;
   final bool disableScrollPhysics;
 
-  const TransactionListViewWidget({
+  const TransactionItem({
     super.key,
     required this.transactions,
     required this.getAccountNameCallback,

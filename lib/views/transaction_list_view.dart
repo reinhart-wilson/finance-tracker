@@ -4,7 +4,7 @@ import 'package:finance_tracker/viewmodels/transaction/transaction_list_viewmode
 import 'package:finance_tracker/views/transaction_form_view.dart';
 import 'package:finance_tracker/views/widgets/transaction/transaction_action_dialog.dart';
 import 'package:finance_tracker/views/widgets/transaction/transaction_filter_widget.dart';
-import 'package:finance_tracker/views/widgets/transaction/transaction_list_view_widget.dart';
+import 'package:finance_tracker/views/widgets/transaction/transaction_list_item.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -77,7 +77,7 @@ class TransactionListView extends StatelessWidget {
                 selector: (_, vm) => vm.filteredTransactions,
                 builder: (context, filteredTransactions, child) {
                   final vm = context.read<TransactionListViewmodel>();
-                  return TransactionListViewWidget(
+                  return TransactionItem(
                       transactions: filteredTransactions,
                       getAccountNameCallback: (tx) =>
                           vm.accountNameOfId(tx.accountId),
