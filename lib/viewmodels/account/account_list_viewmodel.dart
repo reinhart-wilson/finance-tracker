@@ -41,7 +41,9 @@ class AccountListViewmodel extends ChangeNotifier {
   double _balanceGrowth = 0;
 
   /// Getters
-  List<Account> get accountList => _accountList;
+  List<Account> get accountList => _filterCallback == null
+      ? _accountList
+      : _accountList.filtered(_filterCallback);
   bool get isLoading => _isLoading;
   double get totalBalance => _totalBalance;
   double get unsettledSum => _unsettledSum;
@@ -142,8 +144,7 @@ class AccountListViewmodel extends ChangeNotifier {
       final lastMonthSum = await _txnRepository.getSettledTransactionsSum(
           startDate: startLastMonth, endDate: endLastMonth);
       if (lastMonthSum == 0) {
-        _balanceGrowth =
-            _totalBalance == 0 ? 0 : 1;
+        _balanceGrowth = _totalBalance == 0 ? 0 : 1;
       } else {
         _balanceGrowth = _totalBalance / lastMonthSum - 1;
       }
