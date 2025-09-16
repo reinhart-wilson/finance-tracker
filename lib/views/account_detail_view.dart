@@ -262,10 +262,11 @@ class _AccountDetailContentState extends State<_AccountDetailContent> {
                           transactions: settledTransactions,
                           getAccountNameCallback: (tx) =>
                               vm.accountNameOfId(tx.accountId),
-                          getSubtitleCallback: (tx, accountName) =>
-                              childAccounts.isEmpty
-                                  ? '${tx.category}'
-                                  : '${accountName}: ${tx.category}',
+                          getSubtitleCallback: (tx, accountName) {
+                            final categoryName = tx.category ?? 'None';
+                              return childAccounts.isEmpty
+                                  ? categoryName
+                                  : '$accountName: $categoryName';},
                           onLongPressCallback: (tx) async {
                             showDialog(
                                 context: context,

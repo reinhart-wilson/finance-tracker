@@ -82,7 +82,7 @@ class TransactionListView extends StatelessWidget {
                       getAccountNameCallback: (tx) =>
                           vm.accountNameOfId(tx.accountId),
                       getSubtitleCallback: (tx, accountName) =>
-                          '${accountName}: ${tx.category}',
+                          '${accountName}: ${tx.category?? 'None'}',
                       onLongPressCallback: (tx) async {
                         showDialog(
                             context: context,
