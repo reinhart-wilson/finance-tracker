@@ -1,7 +1,7 @@
 import 'package:finance_tracker/models/transaction/transaction.dart';
 import 'package:finance_tracker/themes/app_sizes.dart';
 import 'package:finance_tracker/viewmodels/transaction/transaction_list_viewmodel.dart';
-import 'package:finance_tracker/views/transaction_form_view.dart';
+import 'package:finance_tracker/views/widgets/transaction/transaction_form_view.dart';
 import 'package:finance_tracker/views/widgets/transaction/transaction_action_dialog.dart';
 import 'package:finance_tracker/views/widgets/transaction/transaction_filter_widget.dart';
 import 'package:finance_tracker/views/widgets/transaction/transaction_list_item.dart';
