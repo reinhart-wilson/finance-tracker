@@ -2,7 +2,7 @@ import 'package:finance_tracker/models/account.dart';
 import 'package:finance_tracker/models/transaction/transaction.dart';
 import 'package:finance_tracker/viewmodels/view_models.dart';
 import 'package:finance_tracker/views/widgets/nullable_date_field.dart';
-import 'package:finance_tracker/views/widgets/transaction/child_account_item_widget.dart';
+import 'package:finance_tracker/views/widgets/account/child_account_item_widget.dart';
 import 'package:finance_tracker/views/widgets/transaction/transaction_action_dialog.dart';
 import 'package:finance_tracker/views/widgets/transaction/transaction_list_view_widget.dart';
 import 'package:flutter/material.dart';

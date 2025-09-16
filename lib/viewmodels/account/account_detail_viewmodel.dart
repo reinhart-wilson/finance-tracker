@@ -165,8 +165,10 @@ class AccountDetailViewmodel extends ChangeNotifier {
     try {
       if (tx.id == null) throw Exception('Transaction no found');
       await _transactionRepository.deleteTransaction(tx.id!);
-      await _loadUnsettledTransactions(startDate: _dueStartDate, endDate:  _dueEndDate);
-      await _loadSettledTransactions(startDate: _settledStartDate, endDate:  _settledEndDate);
+      await _loadUnsettledTransactions(
+          startDate: _dueStartDate, endDate: _dueEndDate);
+      await _loadSettledTransactions(
+          startDate: _settledStartDate, endDate: _settledEndDate);
       notifyListeners();
     } catch (e) {
       rethrow;
@@ -176,8 +178,10 @@ class AccountDetailViewmodel extends ChangeNotifier {
   Future<void> markTransactionAsSettled(Transaction tx) async {
     try {
       await _transactionRepository.markTransactionAsSettled(tx);
-      await _loadUnsettledTransactions(startDate: _dueStartDate, endDate:  _dueEndDate);
-      await _loadSettledTransactions(startDate: _settledStartDate, endDate:  _settledEndDate);
+      await _loadUnsettledTransactions(
+          startDate: _dueStartDate, endDate: _dueEndDate);
+      await _loadSettledTransactions(
+          startDate: _settledStartDate, endDate: _settledEndDate);
       notifyListeners();
     } catch (e) {
       rethrow;
