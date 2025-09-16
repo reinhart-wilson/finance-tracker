@@ -32,6 +32,7 @@ class AccountListViewmodel extends ChangeNotifier {
   final AccountRepository _accountRepository;
   final TransactionRepository _txnRepository;
   List<Account> _accountList = [];
+  final Map<int, double> _unsettledAmountByAccountId = {};
   bool Function(Account)? _filterCallback;
   bool _isLoading = false;
 
@@ -58,6 +59,10 @@ class AccountListViewmodel extends ChangeNotifier {
     notifyListeners();
     _accountList = await _accountRepository.getAllAccounts();
     _accountList.sort((a, b) => a.name.compareTo(b.name));
+    final now = DateTime.now();
+    await _loadUnsettledTransactionsSum(
+        startDate: DateTime(now.year, now.month, 1),
+        endDate: DateTime(now.year, now.month+1, 0, 23, 59, 999));
     _isLoading = false;
     notifyListeners();
   }
@@ -106,7 +111,14 @@ class AccountListViewmodel extends ChangeNotifier {
     try {
       _isLoading = true;
       notifyListeners();
-      _unsettledSum = await _txnRepository.getUnsettledTransactionsSum();
+      final now = DateTime.now();
+      final startDate = DateTime(
+        now.year,
+        now.month,
+        1,
+      );
+      final endDate = DateTime(now.year, now.month+1, 0, 23, 59, 999);
+      _unsettledSum = await _txnRepository.getUnsettledTransactionsSum(startDate: startDate, endDate: endDate);
     } catch (e) {
       rethrow;
     } finally {
@@ -136,5 +148,44 @@ class AccountListViewmodel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> _loadUnsettledTransactionsSum(
+      {DateTime? startDate, DateTime? endDate}) async {
+    try {
+      for (var parentAccount
+          in _accountList.where((account) => account.parentId == null)) {
+        final parentId = parentAccount.id!;
+
+        // Get the sum of parent's unsettled transactions
+        final parentUnsettledAmount =
+            await _txnRepository.getUnsettledTransactionsSum(
+          accountIds: [parentId],
+          startDate: startDate,
+          endDate: endDate,
+        );
+
+        _unsettledAmountByAccountId[parentId] = parentUnsettledAmount;
+
+        // Adds child account and their unsettled transactions total
+        final childAccountsList =
+            await _accountRepository.getChildAccounts(parentId);
+        for (final account in childAccountsList) {
+          final unsettledAmount =
+              await _txnRepository.getUnsettledTransactionsSum(
+            accountIds: [account.id!],
+            startDate: startDate,
+            endDate: endDate,
+          );
+          _unsettledAmountByAccountId[account.id!] = unsettledAmount;
+        }
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  double? getUnsettledSumForId(int accountId) {
+    return _unsettledAmountByAccountId[accountId];
   }
 }

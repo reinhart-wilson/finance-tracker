@@ -106,9 +106,8 @@ class TransactionRepository with ChangeNotifier {
     }
   }
 
-  Future<Map<int, Map<String, dynamic>>> getUnsettledPerAccount(Transaction tx) async {
+  Future<Map<int, Map<String, dynamic>>> getUnsettledSumPerAccount() async {
     try {
-      if (tx.id == null) throw Exception('Transaction id not found');
       final rawList = await _localDataService.fetchUnsettledSumPerAccount();
 
       final Map<int, Map<String, dynamic>> resultMap = {
