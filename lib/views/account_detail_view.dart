@@ -167,7 +167,10 @@ class _AccountDetailContentState extends State<_AccountDetailContent> {
                                   TextSpan(
                                     text: formatCurrency(
                                         parentUnsettledAmount +
-                                            context.read<AccountDetailViewmodel>().parentAccount!.balance,
+                                            context
+                                                .read<AccountDetailViewmodel>()
+                                                .parentAccount!
+                                                .balance,
                                         shorten: true),
                                     style: theme.textTheme.bodyMedium?.copyWith(
                                         color: parentUnsettledAmount +
@@ -257,6 +260,10 @@ class _AccountDetailContentState extends State<_AccountDetailContent> {
                     selector: (_, vm) => vm.settledTransactions,
                     builder: (context, settledTransactions, _) {
                       final vm = context.read<AccountDetailViewmodel>();
+                      if (settledTransactions.isEmpty) {
+                        return const Text(
+                            "No transactions found for the current filter.");
+                      }
                       return TransactionItem(
                           disableScrollPhysics: true,
                           transactions: settledTransactions,
@@ -264,9 +271,10 @@ class _AccountDetailContentState extends State<_AccountDetailContent> {
                               vm.accountNameOfId(tx.accountId),
                           getSubtitleCallback: (tx, accountName) {
                             final categoryName = tx.category ?? 'None';
-                              return childAccounts.isEmpty
-                                  ? categoryName
-                                  : '$accountName: $categoryName';},
+                            return childAccounts.isEmpty
+                                ? categoryName
+                                : '$accountName: $categoryName';
+                          },
                           onLongPressCallback: (tx) async {
                             showDialog(
                                 context: context,
@@ -335,6 +343,10 @@ class _AccountDetailContentState extends State<_AccountDetailContent> {
                     selector: (_, vm) => vm.unsettledTransactions,
                     builder: (context, unsettledTransactions, _) {
                       final vm = context.read<AccountDetailViewmodel>();
+                      if (unsettledTransactions.isEmpty) {
+                        return Text(
+                            "No transactions found for the current filter.");
+                      }
                       return TransactionItem(
                           disableScrollPhysics: true,
                           transactions: unsettledTransactions,
