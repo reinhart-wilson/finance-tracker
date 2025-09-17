@@ -96,7 +96,7 @@ class _CategoryFormState extends State<CategoryForm> {
               ),
             ),
             Text(
-              'Buat Kategori Baru',
+              'Add New Category',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.primary,
@@ -108,17 +108,17 @@ class _CategoryFormState extends State<CategoryForm> {
             // Category Name Field
             TextFormField(
               decoration: InputDecoration(
-                labelText: 'Nama Kategori',
+                labelText: 'Category Name',
                 prefixIcon: Icon(Icons.label, color: colorScheme.primary),
                 border: const OutlineInputBorder(),
               ),
               onSaved: (value) => _categoryName = value,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Silakan masukkan nama kategori.';
+                  return 'Please enter category name.';
                 }
                 if (value.toLowerCase() == 'none') {
-                  return 'Nama kategori tidak valid.';
+                  return 'Reserved category name.';
                 }
                 return null;
               },
@@ -131,7 +131,7 @@ class _CategoryFormState extends State<CategoryForm> {
               builder: (_, accounts, __) => DropdownButtonFormField<Account>(
                 value: _selectedAccount,
                 decoration: InputDecoration(
-                  labelText: 'Akun Terkait',
+                  labelText: 'Associated Account',
                   prefixIcon: Icon(Icons.account_balance_wallet,
                       color: colorScheme.primary),
                   border: const OutlineInputBorder(),
@@ -139,7 +139,7 @@ class _CategoryFormState extends State<CategoryForm> {
                 items: [
                   const DropdownMenuItem<Account>(
                     value: null,
-                    child: Text('Tidak Ada'),
+                    child: Text('None'),
                   ),
                   ...accounts.map(
                     (account) => DropdownMenuItem<Account>(
@@ -159,7 +159,7 @@ class _CategoryFormState extends State<CategoryForm> {
 
             // Color Picker Preview Button
             Text(
-              'Warna Kategori',
+              'Associated Color',
               style: theme.textTheme.labelMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -179,7 +179,7 @@ class _CategoryFormState extends State<CategoryForm> {
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  'Pilih Warna',
+                  'Pick Color',
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: useWhiteForeground(_selectedColor)
                         ? Colors.white
@@ -229,7 +229,7 @@ class _CategoryFormState extends State<CategoryForm> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.save),
-                  label: const Text('Simpan'),
+                  label: const Text('Save'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colorScheme.primary,
                     foregroundColor: colorScheme.onPrimary,
