@@ -49,6 +49,18 @@ class AccountListViewmodel extends ChangeNotifier {
   double get unsettledSum => _unsettledSum;
   double get projectedBalance => _totalBalance + unsettledSum;
   double get balanceGrowth => _balanceGrowth;
+  Map<int, List<Account>> get childrenMap {
+    final Map<int, List<Account>> childrenMap = {};
+    for (final acc in _accountList) {
+      if (acc.parentId != null) {
+        childrenMap.putIfAbsent(acc.parentId!, () => []).add(acc);
+      }
+    }
+
+    return childrenMap;
+  }
+  List<Account> get parentAccountList =>
+      _accountList.where((acc) => acc.parentId == null).toList();
 
   /// Setter
   set filter(filterCallback) {

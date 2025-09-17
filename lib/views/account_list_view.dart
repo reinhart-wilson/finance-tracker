@@ -20,10 +20,10 @@ class AccountListView extends StatelessWidget {
     return "Rp. ${formatter.format(balance)}";
   }
 
-  // TODO: show amount due per accout (if any)
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final vm = context.read<AccountListViewmodel>();
     context.read<AccountListViewmodel>().filter = null;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -66,7 +66,7 @@ class AccountListView extends StatelessWidget {
                                 color: theme.colorScheme.onPrimary,
                               ),
                             ),
-                            const SizedBox(width: 4), // optional spacing
+                            const SizedBox(width: 4),
                             Icon(
                               Icons.wallet,
                               size: 16,
@@ -129,7 +129,7 @@ class AccountListView extends StatelessWidget {
                                         text: formatPercentage(growth),
                                         style: theme.textTheme.labelMedium
                                             ?.copyWith(color: color),
-                                        children: [
+                                        children: const [
                                           TextSpan(text: ' from last month')
                                         ]),
                                   ),
@@ -213,8 +213,7 @@ class AccountListView extends StatelessWidget {
                                       ),
                                       const SizedBox(width: 4),
                                       Icon(
-                                        Icons
-                                            .trending_up, 
+                                        Icons.trending_up,
                                         size: 14,
                                         color: theme.colorScheme.onPrimary,
                                       ),
@@ -226,7 +225,9 @@ class AccountListView extends StatelessWidget {
                                   Selector<AccountListViewmodel, double>(
                                       selector: (_, vm) => vm.projectedBalance,
                                       builder: (context, projectedBalance, _) {
-                                        var color = projectedBalance < 0 ? Colors.red : Colors.green ;
+                                        var color = projectedBalance < 0
+                                            ? Colors.red
+                                            : Colors.green;
                                         // final totalBalance  = context.read<AccountListViewmodel>().totalBalance;
                                         // if (projectedBalance < totalBalance ){
                                         //   color = Colors.red;
@@ -236,8 +237,7 @@ class AccountListView extends StatelessWidget {
                                               shorten: true),
                                           style: TextStyle(
                                               fontWeight: FontWeight.w600,
-                                              color: color
-                                                ),
+                                              color: color),
                                         );
                                       }),
                                 ],
@@ -260,9 +260,8 @@ class AccountListView extends StatelessWidget {
               Selector<AccountListViewmodel, List<Account>>(
                 selector: (_, vm) => vm.accountList,
                 builder: (context, accounts, _) {
-                  final parentAccounts =
-                      accounts.where((acc) => acc.parentId == null).toList();
-                  final childAccounts = getChildren(accounts);
+                  final parentAccounts = vm.parentAccountList;
+                  final childAccounts = vm.childrenMap;
 
                   return Expanded(
                     child: ListView.builder(
@@ -297,7 +296,9 @@ class AccountListView extends StatelessWidget {
                   );
                 },
               ),
-              const SizedBox(height: AppSizes.paddingMedium,)
+              const SizedBox(
+                height: AppSizes.paddingMedium,
+              )
             ],
           ),
         ),
@@ -327,13 +328,3 @@ class AccountListView extends StatelessWidget {
   }
 }
 
-Map<int, List<Account>> getChildren(List<Account> accounts) {
-  final Map<int, List<Account>> childrenMap = {};
-  for (final acc in accounts) {
-    if (acc.parentId != null) {
-      childrenMap.putIfAbsent(acc.parentId!, () => []).add(acc);
-    }
-  }
-
-  return childrenMap;
-}

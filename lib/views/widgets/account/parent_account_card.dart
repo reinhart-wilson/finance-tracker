@@ -162,7 +162,8 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
                                     text: '${formatCurrency(child.balance)} ',
                                     style: theme.textTheme.bodySmall,
                                     children: [
-                                      if (childUnsettled != 0)
+                                      if (childUnsettled != null &&
+                                          childUnsettled != 0)
                                         TextSpan(
                                             text:
                                                 '(${formatCurrency(childUnsettled!)})',
@@ -207,6 +208,11 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
                 ],
               );
             }),
+
+          if (widget.childAccounts.isEmpty)
+            const SizedBox(
+              height: AppSizes.paddingMini,
+            )
         ],
       ),
     );
