@@ -469,7 +469,7 @@ class LocalDataService {
       LEFT OUTER JOIN transaction_categories c 
         ON t.transaction_category_id = c.id
       WHERE $where
-      ORDER BY t.due_date ASC
+      ORDER BY t.due_date DESC
   ''', whereArgs);
 
     return result;
