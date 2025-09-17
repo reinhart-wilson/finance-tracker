@@ -59,6 +59,7 @@ class AccountListViewmodel extends ChangeNotifier {
 
     return childrenMap;
   }
+
   List<Account> get parentAccountList =>
       _accountList.where((acc) => acc.parentId == null).toList();
 
@@ -76,7 +77,7 @@ class AccountListViewmodel extends ChangeNotifier {
     final now = DateTime.now();
     await _loadUnsettledTransactionsSum(
         startDate: DateTime(now.year, now.month, 1),
-        endDate: DateTime(now.year, now.month + 1, 0, 23, 59, 999));
+        endDate: DateTime(now.year, now.month + 1, 0, 23, 59, 59, 999));
     _isLoading = false;
     notifyListeners();
   }
