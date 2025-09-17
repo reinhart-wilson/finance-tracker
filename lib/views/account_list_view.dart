@@ -163,7 +163,7 @@ class AccountListView extends StatelessWidget {
                                       ),
                                       const SizedBox(width: 4),
                                       Icon(
-                                        Icons.schedule,
+                                        Icons.hourglass_top,
                                         size: 14,
                                         color: theme.colorScheme.onPrimary,
                                       ),
@@ -213,7 +213,7 @@ class AccountListView extends StatelessWidget {
                                       ),
                                       const SizedBox(width: 4),
                                       Icon(
-                                        Icons.trending_up,
+                                        Icons.schedule,
                                         size: 14,
                                         color: theme.colorScheme.onPrimary,
                                       ),
