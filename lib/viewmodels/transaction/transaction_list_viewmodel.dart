@@ -54,9 +54,15 @@ class TransactionListViewmodel extends ChangeNotifier {
   double get unsettledSum => _unsettledSum;
   bool get isLoading => _isLoading;
   List<Account> get accounts => _accounts;
-  List<Transaction> get filteredTransactions => _filteredTransactions.isEmpty
-      ? [..._settledTransactions, ..._unsettledTransactions]
-      : _filteredTransactions;
+  List<Transaction> get filteredTransactions {
+    if (_keyword.isEmpty) {
+      // No search → show everything
+      return [..._settledTransactions, ..._unsettledTransactions];
+    }
+    // Search active → return filtered list (even if empty)
+    return _filteredTransactions;
+  }
+
   List<TransactionCategory> get categories => _categories;
   TransactionFilter get filter => _filter;
 
@@ -206,8 +212,8 @@ class TransactionListViewmodel extends ChangeNotifier {
       final bDate = b.settledDate ?? b.dueDate;
 
       if (aDate == null && bDate == null) return 0;
-      if (aDate == null) return 1; // a > b, karena b punya tanggal
-      if (bDate == null) return -1; // a < b, karena a punya tanggal
+      if (aDate == null) return -1; // a > b, karena b punya tanggal
+      if (bDate == null) return 1; // a < b, karena a punya tanggal
 
       return -aDate.compareTo(bDate);
     });
