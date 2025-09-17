@@ -71,7 +71,7 @@ class _AccountDetailContentState extends State<_AccountDetailContent> {
     super.initState();
 
     final now = DateTime.now();
-    _dueEndDate = DateTime(now.year, now.month + 1, 0);
+    _dueEndDate = DateTime(now.year, now.month + 1, 0, 23, 59, 59, 999);
     _settledStartDate = DateTime(now.year, now.month, 1);
     _settledEndDate = now;
   }
@@ -344,7 +344,7 @@ class _AccountDetailContentState extends State<_AccountDetailContent> {
                     builder: (context, unsettledTransactions, _) {
                       final vm = context.read<AccountDetailViewmodel>();
                       if (unsettledTransactions.isEmpty) {
-                        return Text(
+                        return const Text(
                             "No transactions found for the current filter.");
                       }
                       return TransactionItem(
