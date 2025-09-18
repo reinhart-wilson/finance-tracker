@@ -1,4 +1,5 @@
 import 'package:finance_tracker/views/screens/accounts.dart';
+import 'package:finance_tracker/views/screens/options_page.dart';
 import 'package:finance_tracker/views/screens/transactions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -26,7 +27,6 @@ class _HomeViewState extends State<HomeView> {
           : const SizedBox.shrink(), // atau Container()
     );
   }
-
 
   final _navigatorKeys = [
     GlobalKey<NavigatorState>(),
@@ -74,23 +74,36 @@ class _HomeViewState extends State<HomeView> {
         }
       },
       child: Scaffold(
-        
         body: IndexedStack(
           index: _selectedIndex,
           children: [
             _buildOffstageNavigator(0, const AccountListView()),
             _buildOffstageNavigator(1, const TransactionListView()),
-            // _buildOffstageNavigator(2, const Text('Home')),
+            _buildOffstageNavigator(2, const OptionsPage()),
           ],
         ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onTap,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.wallet), label: "Accounts"),
-            BottomNavigationBarItem(icon: Icon(Icons.list), label: "Transactions"),
-            // BottomNavigationBarItem(icon: Icon(Icons.home), label: "Beranda"),
-          ],
+        bottomNavigationBar: Container(
+          decoration: const BoxDecoration(
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: Color.fromARGB(144, 0, 0, 0),
+                blurRadius: 20,
+                spreadRadius: -10
+              ),
+            ],
+          ),
+          child: BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            onTap: _onTap,
+            items: const [
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.wallet), label: "Accounts"),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.list), label: "Transactions"),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.settings), label: "Options"),
+            ],
+          ),
         ),
       ),
     );
