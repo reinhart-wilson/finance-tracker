@@ -1,7 +1,7 @@
 import 'package:finance_tracker/models/account.dart';
 import 'package:finance_tracker/themes/app_sizes.dart';
 import 'package:finance_tracker/utils/formatter.dart';
-import 'package:finance_tracker/views/account_details.dart';
+import 'package:finance_tracker/views/screens/account_details.dart';
 import 'package:finance_tracker/views/widgets/account/parent_account_card.dart';
 import 'package:flutter/material.dart';
 import 'package:finance_tracker/viewmodels/account/account_list_viewmodel.dart';
