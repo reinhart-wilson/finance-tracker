@@ -55,12 +55,11 @@ class TransactionListViewmodel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   List<Account> get accounts => _accounts;
   List<Transaction> get filteredTransactions {
-    if (_keyword.isEmpty) {
-      // No search → show everything
-      return [..._settledTransactions, ..._unsettledTransactions];
-    }
-    // Search active → return filtered list (even if empty)
-    return _filteredTransactions;
+    final returnedList = _keyword.isEmpty
+        ? [..._settledTransactions, ..._unsettledTransactions]
+        : _filteredTransactions;
+    sortTransactions(returnedList);
+    return returnedList;
   }
 
   List<TransactionCategory> get categories => _categories;
@@ -157,7 +156,6 @@ class TransactionListViewmodel extends ChangeNotifier {
         return tx.title.toLowerCase().contains(_keyword.toLowerCase());
       }).toList();
     }
-    sortTransactions();
     notifyListeners();
   }
 
@@ -206,8 +204,8 @@ class TransactionListViewmodel extends ChangeNotifier {
     }
   }
 
-  void sortTransactions() {
-    _filteredTransactions.sort((a, b) {
+  void sortTransactions(List<Transaction> transactionsList) {
+    transactionsList.sort((a, b) {
       final aDate = a.settledDate ?? a.dueDate;
       final bDate = b.settledDate ?? b.dueDate;
 
