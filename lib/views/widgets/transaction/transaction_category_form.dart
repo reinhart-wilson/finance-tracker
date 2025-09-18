@@ -1,19 +1,18 @@
 import 'package:finance_tracker/models/account.dart';
 import 'package:finance_tracker/models/transaction/transaction_category.dart';
-import 'package:finance_tracker/themes/app_sizes.dart';
 import 'package:finance_tracker/viewmodels/transaction/transaction_category_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
 
-class CategoryForm extends StatefulWidget {
-  const CategoryForm({super.key});
+class TransactionCategoryForm extends StatefulWidget {
+  const TransactionCategoryForm({super.key});
 
   @override
-  State<CategoryForm> createState() => _CategoryFormState();
+  State<TransactionCategoryForm> createState() => _TransactionCategoryFormState();
 }
 
-class _CategoryFormState extends State<CategoryForm> {
+class _TransactionCategoryFormState extends State<TransactionCategoryForm> {
   final _formKey = GlobalKey<FormState>();
   String? _categoryName;
   Account? _selectedAccount;

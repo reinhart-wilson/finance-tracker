@@ -17,8 +17,9 @@ class TransactionListViewmodel extends ChangeNotifier {
     // By default loads all transactions settled in the current month or
     // still due up to current month.
     final now = DateTime.now();
-    final firstDayOfMonth = now.subtract(const Duration(days: 30));
-    final lastDayOfMonth = now;
+    final firstDayOfMonth = DateTime(now.year, now.month - 1, 1);
+    final lastDayOfMonth =
+        DateTime(now.year, now.month + 1, 0, 23, 59, 59, 999);
     _filter = TransactionFilter(
         startDate: firstDayOfMonth,
         endDate: lastDayOfMonth,
