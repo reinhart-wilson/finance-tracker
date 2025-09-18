@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:finance_tracker/configs/dependencies.dart';
-import 'package:finance_tracker/views/account_list_view.dart';
+import 'package:finance_tracker/views/accounts.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

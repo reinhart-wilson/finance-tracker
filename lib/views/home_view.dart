@@ -1,4 +1,4 @@
-import 'package:finance_tracker/views/account_list_view.dart';
+import 'package:finance_tracker/views/accounts.dart';
 import 'package:finance_tracker/views/transactions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
