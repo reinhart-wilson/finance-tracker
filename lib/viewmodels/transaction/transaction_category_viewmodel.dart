@@ -30,7 +30,7 @@ class TransactionCategoryViewmodel extends ChangeNotifier {
 
   List<Account> get accounts => _accounts;
   bool get isLoading => _isLoading;
-  List<TransactionCategory>  get categories => _categories;
+  List<TransactionCategory> get categories => _categories;
 
   Future<void> _loadAccounts() async {
     _isLoading = true;
@@ -59,5 +59,9 @@ class TransactionCategoryViewmodel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> editCategory(TransactionCategory category) async {
+    await _categoryRepository.editTransactionCategory(category);
   }
 }

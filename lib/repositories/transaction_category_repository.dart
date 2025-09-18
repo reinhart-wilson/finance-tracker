@@ -3,7 +3,7 @@ import 'package:finance_tracker/services/local_data_service.dart';
 import 'package:finance_tracker/models/mappers/transaction_category_mapper.dart';
 import 'package:flutter/foundation.dart';
 
-class TransactionCategoryRepository with ChangeNotifier{
+class TransactionCategoryRepository with ChangeNotifier {
   TransactionCategoryRepository({required localDataService})
       : _localDataService = localDataService;
 
@@ -28,6 +28,19 @@ class TransactionCategoryRepository with ChangeNotifier{
   Future<void> deleteTransactionCategory(int categoryId) async {
     try {
       await _localDataService.deleteTransactionCategory(categoryId);
+      notifyListeners();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> editTransactionCategory(TransactionCategory category) async {
+    try {
+      final result =
+          await _localDataService.updateTransactionCategory(category.toMap());
+      if (result < 1) {
+        throw Exception('No change was made');
+      }
       notifyListeners();
     } catch (e) {
       rethrow;

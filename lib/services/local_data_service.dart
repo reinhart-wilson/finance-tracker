@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:finance_tracker/models/tables/transaction_categories_table.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -251,8 +252,8 @@ class LocalDataService {
 
   Future<double> getTotalBalance() async {
     final db = await database;
-    final result =
-        await db.rawQuery('SELECT sum(balance) AS total FROM accounts WHERE parent_id IS NULL');
+    final result = await db.rawQuery(
+        'SELECT sum(balance) AS total FROM accounts WHERE parent_id IS NULL');
     if (result.isNotEmpty && result.first['total'] != null) {
       return result.first['total'] as double; // SUM() often returns a double
     }
@@ -475,7 +476,7 @@ class LocalDataService {
     return result;
   }
 
-  Future<List<Map<String, dynamic>>> fetchUnsettledSumPerAccount() async{
+  Future<List<Map<String, dynamic>>> fetchUnsettledSumPerAccount() async {
     final db = await database;
     final result = await db.rawQuery('''
       SELECT 
@@ -602,6 +603,14 @@ class LocalDataService {
       );
       if (response < 0) throw Exception("Failed to delete transaction");
     });
+  }
+
+  Future<int> updateTransactionCategory(Map<String, dynamic> category) async {
+    final db = await database;
+
+    return await db.update(TransactionCategoriesTable.tableName, category,
+        where: TransactionCategoriesTable.columnId,
+        whereArgs: category[TransactionCategoriesTable.columnId]);
   }
 
   /// Fetches all transaction categories, sorted by name
