@@ -4,7 +4,7 @@ import 'package:finance_tracker/viewmodels/view_models.dart';
 import 'package:finance_tracker/views/widgets/nullable_date_field.dart';
 import 'package:finance_tracker/views/widgets/account/child_account_item_widget.dart';
 import 'package:finance_tracker/views/widgets/transaction/transaction_action_dialog.dart';
-import 'package:finance_tracker/views/widgets/transaction/transaction_list_item.dart';
+import 'package:finance_tracker/views/widgets/transaction/transaction_item.dart';
 import 'package:flutter/material.dart';
 import 'package:finance_tracker/utils/formatter.dart';
 import 'package:flutter/services.dart';
