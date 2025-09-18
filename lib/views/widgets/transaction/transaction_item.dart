@@ -1,5 +1,4 @@
 import 'package:finance_tracker/models/transaction/transaction.dart';
-import 'package:finance_tracker/themes/app_sizes.dart';
 import 'package:finance_tracker/views/widgets/transaction/transaction_detail_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:finance_tracker/utils/formatter.dart';
