@@ -46,7 +46,7 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
             onLongPress: () async {
               final confirmed = await showDialog<bool>(
                 context: context,
-                builder: (context) => const ConfirmationDialog(
+                builder: (context) => const _AccountConfirmationDialog(
                   title: 'Confirm Deletion',
                   content: 'Are you sure you want to delete this account?',
                 ),
@@ -121,11 +121,11 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
 
           // Divider between parent and children
           if (_expanded && widget.childAccounts.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(
+            const Padding(
+              padding: EdgeInsets.symmetric(
                   horizontal: AppSizes.paddingMedium),
               child: Divider(
-                  height: 1, color: const Color.fromARGB(255, 240, 228, 255)),
+                  height: 1, color: Color.fromARGB(255, 240, 228, 255)),
             ),
 
           // Expanded children
@@ -148,7 +148,7 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
                     title: Row(
                       children: [
                         // Left color strip
-                        SizedBox(
+                        const SizedBox(
                           width: 30,
                         ),
                         // Text and content
@@ -166,7 +166,7 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
                                           childUnsettled != 0)
                                         TextSpan(
                                             text:
-                                                '(${formatCurrency(childUnsettled!)})',
+                                                '(${formatCurrency(childUnsettled)})',
                                             style: TextStyle(
                                                 color: childUnsettled >= 0
                                                     ? Colors.green
@@ -182,7 +182,7 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
                     onLongPress: () async {
                       final confirmed = await showDialog<bool>(
                         context: context,
-                        builder: (context) => const ConfirmationDialog(
+                        builder: (context) => const _AccountConfirmationDialog(
                           title: 'Confirm Deletion',
                           content:
                               'Are you sure you want to delete this account?',
@@ -219,19 +219,18 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
   }
 }
 
-class ConfirmationDialog extends StatelessWidget {
+class _AccountConfirmationDialog extends StatelessWidget {
   final String title;
   final String content;
   final String confirmText;
   final String cancelText;
 
-  const ConfirmationDialog({
-    Key? key,
+  const _AccountConfirmationDialog({
     required this.title,
     required this.content,
     this.confirmText = 'Delete',
     this.cancelText = 'Cancel',
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -6,7 +6,7 @@ class TransactionFilterDateField extends StatefulWidget {
   final DateTime? value;
   final ValueChanged<DateTime?> onChanged;
   final bool isNullable;
-  final bool isLimitEndDate;
+  final bool isLimitDate;
 
   const TransactionFilterDateField({
     super.key,
@@ -14,7 +14,7 @@ class TransactionFilterDateField extends StatefulWidget {
     required this.value,
     required this.onChanged,
     this.isNullable = false,
-    this.isLimitEndDate = false
+    this.isLimitDate = false
   });
 
   @override
@@ -68,7 +68,7 @@ class _TransactionFilterDateFieldState extends State<TransactionFilterDateField>
               context: context,
               initialDate: _selectedDate ?? now,
               firstDate: DateTime(2000),
-              lastDate: widget.isLimitEndDate ? now : DateTime(2100),
+              lastDate: widget.isLimitDate ? now : DateTime(2100),
             );
             if (picked != null) {
               setState(() {

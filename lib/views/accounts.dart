@@ -4,7 +4,6 @@ import 'package:finance_tracker/utils/formatter.dart';
 import 'package:finance_tracker/views/account_details.dart';
 import 'package:finance_tracker/views/widgets/account/parent_account_card.dart';
 import 'package:flutter/material.dart';
-import 'package:animated_tree_view/animated_tree_view.dart';
 import 'package:finance_tracker/viewmodels/account/account_list_viewmodel.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
