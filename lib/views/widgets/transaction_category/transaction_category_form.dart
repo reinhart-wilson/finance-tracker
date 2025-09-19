@@ -1,22 +1,41 @@
 import 'package:finance_tracker/models/account.dart';
 import 'package:finance_tracker/models/transaction/transaction_category.dart';
+import 'package:finance_tracker/repositories/account_repository.dart';
 import 'package:finance_tracker/viewmodels/transaction/transaction_category_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
 
 class TransactionCategoryForm extends StatefulWidget {
-  const TransactionCategoryForm({super.key});
+  final TransactionCategory? category;
+
+  const TransactionCategoryForm({super.key, this.category});
 
   @override
-  State<TransactionCategoryForm> createState() => _TransactionCategoryFormState();
+  State<TransactionCategoryForm> createState() =>
+      _TransactionCategoryFormState();
 }
 
 class _TransactionCategoryFormState extends State<TransactionCategoryForm> {
   final _formKey = GlobalKey<FormState>();
   String? _categoryName;
   Account? _selectedAccount;
+  late TextEditingController _nameController;
   Color _selectedColor = Colors.black;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(
+      text: widget.category?.name ?? '',
+    );
+    _selectedAccount = widget.category != null
+        ? context
+            .read<TransactionCategoryViewmodel>()
+            .accounts
+            .searchById(widget.category!.defaultAccountId!)
+        : null;
+  }
 
   void _pickColor(BuildContext context) {
     showDialog(
@@ -58,6 +77,7 @@ class _TransactionCategoryFormState extends State<TransactionCategoryForm> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final mediaQuery = MediaQuery.of(context);
+    final isEdit = widget.category != null;
 
     return Container(
       padding: EdgeInsets.only(
@@ -95,7 +115,7 @@ class _TransactionCategoryFormState extends State<TransactionCategoryForm> {
               ),
             ),
             Text(
-              'Add New Category',
+              !isEdit ? 'Add New Category' : 'Edit Category',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.primary,
@@ -106,17 +126,19 @@ class _TransactionCategoryFormState extends State<TransactionCategoryForm> {
 
             // Category Name Field
             TextFormField(
+              controller: _nameController,
               decoration: InputDecoration(
                 labelText: 'Category Name',
                 prefixIcon: Icon(Icons.label, color: colorScheme.primary),
                 border: const OutlineInputBorder(),
               ),
-              onSaved: (value) => _categoryName = value,
+              onSaved: (value) {
+                _categoryName = value;
+              },
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter category name.';
-                }
-                if (value.toLowerCase() == 'none') {
+                } else if (value.toLowerCase().trim() == 'none') {
                   return 'Reserved category name.';
                 }
                 return null;
@@ -202,14 +224,31 @@ class _TransactionCategoryFormState extends State<TransactionCategoryForm> {
                             final vm =
                                 context.read<TransactionCategoryViewmodel>();
 
+                            final String message;
+
                             try {
-                              await vm.insertCategory(TransactionCategory(
-                                name: _categoryName!,
-                                color: _selectedColor.toHexString(),
-                                defaultAccountId: _selectedAccount?.id,
-                              ));
+                              if (isEdit) {
+                                await vm.editCategory(widget.category!.copyWith(
+                                  defaultAccountId: _selectedAccount?.id,
+                                  color: _selectedColor.toHexString(),
+                                  name: _categoryName,
+                                ));
+                                message =
+                                    'Successfully edited ${widget.category!.name}.';
+                              } else {
+                                await vm.insertCategory(TransactionCategory(
+                                  name: _categoryName!,
+                                  color: _selectedColor.toHexString(),
+                                  defaultAccountId: _selectedAccount?.id,
+                                ));
+                                message =
+                                    'Successfully added $_categoryName.';
+                              }
 
                               if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(message)),
+                              );
                               Navigator.pop(context);
                             } catch (e) {
                               if (!context.mounted) return;
