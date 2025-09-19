@@ -4,7 +4,7 @@ import 'package:finance_tracker/models/transaction/transaction_category.dart';
 import 'package:finance_tracker/themes/app_sizes.dart';
 import 'package:finance_tracker/viewmodels/view_models.dart';
 import 'package:finance_tracker/views/formatter/currency_input_formatter.dart';
-import 'package:finance_tracker/views/widgets/transaction/transaction_category_form.dart';
+import 'package:finance_tracker/views/widgets/transaction_category/transaction_category_form.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
