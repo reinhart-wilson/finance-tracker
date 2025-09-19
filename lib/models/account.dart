@@ -25,3 +25,10 @@ class Account {
     );
   }
 }
+
+extension SearchById on List<Account> {
+  Account? searchById(int accountId) {
+    final account = where((a) => a.id == accountId).firstOrNull;
+    return account;
+  }
+}
