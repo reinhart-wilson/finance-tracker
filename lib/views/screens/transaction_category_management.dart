@@ -105,7 +105,6 @@ class _CategoryOptions extends StatefulWidget {
 class _CategoryOptionsState extends State<_CategoryOptions> {
   @override
   Widget build(BuildContext context) {
-    final vm = context.read<TransactionCategoryViewmodel>();
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -124,79 +123,81 @@ class _CategoryOptionsState extends State<_CategoryOptions> {
           },
         ),
         ListTile(
-          leading: const Icon(Icons.delete),
-          title: const Text('Delete'),
-          onTap: () async {
-            final categoryId = widget.category.id!;
-            bool isMigrate = false;
-
-            // 1) Ask for delete confirmation
-            final isDeleteConfirmed = await showDialog<bool>(
-              context: context,
-              builder: (context) {
-                return _DeleteConfirmationDialog(
-                  category: widget.category,
-                  value: isMigrate,
-                  onMigrateChanged: (value) {
-                    isMigrate = value ?? isMigrate;
-                  },
-                );
-              },
-            );
-
-            // If user canceled or didn't confirm deletion -> stop.
-            if (isDeleteConfirmed != true) return;
-
-            // 2) If migrate chosen, show migration target dialog (cancelable).
-            if (isMigrate) {
-              final TransactionCategory? target =
-                  await showDialog<TransactionCategory?>(
-                context: context,
-                builder: (_) {
-                  return TransactionCategoryMigrateDialog(
-                    categoryList: vm.categories,
-                    previousCategory: widget.category,
-                  );
-                },
-              );
-
-              // If user cancelled the migration dialog, abort deletion.
-              if (target == null) return;
-
-              // Try to migrate before deleting.
-              try {
-                await vm.migrateCategory(categoryId, target.id!);
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text('Migration failed: ${e.toString()}')),
-                  );
-                }
-                return;
-              }
-            }
-
-            // 3) Proceed with deletion. nullCategory should be true when NOT migrating.
-            var message = 'Successfully deleted ${widget.category.name}.';
-            try {
-              await vm.deleteCategory(widget.category,
-                  nullCategory: !isMigrate);
-            } catch (e) {
-              message =
-                  'Failed to delete ${widget.category.name}: ${e.toString()}';
-                  debugPrintStack();
-            } finally {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(message)),
-                );
-              }
-            }
-          },
-        ),
+            leading: const Icon(Icons.delete),
+            title: const Text('Delete'),
+            onTap: () async {
+              await _deleteAndMigrate(context);
+            }),
       ],
     );
+  }
+
+  Future<void> _deleteAndMigrate(BuildContext context) async {
+    final vm = context.read<TransactionCategoryViewmodel>();
+
+    final categoryId = widget.category.id!;
+    bool isMigrate = false;
+
+    // 1) Ask for delete confirmation
+    final isDeleteConfirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return _DeleteConfirmationDialog(
+          category: widget.category,
+          value: isMigrate,
+          onMigrateChanged: (value) {
+            isMigrate = value ?? isMigrate;
+          },
+        );
+      },
+    );
+
+    // If user canceled or didn't confirm deletion -> stop.
+    if (isDeleteConfirmed != true) return;
+
+    // 2) If migrate chosen, show migration target dialog (cancelable).
+    if (isMigrate && context.mounted) {
+      final TransactionCategory? target =
+          await showDialog<TransactionCategory?>(
+        context: context,
+        builder: (_) {
+          return TransactionCategoryMigrateDialog(
+            categoryList: vm.categories,
+            previousCategory: widget.category,
+          );
+        },
+      );
+
+      // If user cancelled the migration dialog, abort deletion.
+      if (target == null) return;
+
+      // Try to migrate before deleting.
+      try {
+        await vm.migrateCategory(categoryId, target.id!);
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Migration failed: ${e.toString()}')),
+          );
+        }
+        return;
+      }
+    }
+
+    // 3) Proceed with deletion. nullCategory should be true when NOT migrating.
+    var message = 'Successfully deleted ${widget.category.name}.';
+    try {
+      await vm.deleteCategory(widget.category, nullCategory: !isMigrate);
+    } catch (e) {
+      message = 'Failed to delete ${widget.category.name}: ${e.toString()}';
+      debugPrintStack();
+    } finally {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      }
+    }
   }
 }
 
