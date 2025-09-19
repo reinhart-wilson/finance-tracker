@@ -609,8 +609,8 @@ class LocalDataService {
     final db = await database;
 
     return await db.update(TransactionCategoriesTable.tableName, category,
-        where: TransactionCategoriesTable.columnId,
-        whereArgs: category[TransactionCategoriesTable.columnId]);
+        where: "${TransactionCategoriesTable.columnId} = ?",
+        whereArgs: [category[TransactionCategoriesTable.columnId]]);
   }
 
   /// Fetches all transaction categories, sorted by name
