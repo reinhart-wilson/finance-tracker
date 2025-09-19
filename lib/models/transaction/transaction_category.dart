@@ -10,4 +10,18 @@ class TransactionCategory {
     this.defaultAccountId,
     this.color,
   });
+
+  TransactionCategory copyWith({
+    int? id,
+    String? name,
+    int? defaultAccountId,
+    String? color,
+  }) {
+    return TransactionCategory(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      defaultAccountId: defaultAccountId ?? this.defaultAccountId,
+      color: color ?? this.color,
+    );
+  }
 }
