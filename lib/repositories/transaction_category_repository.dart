@@ -25,9 +25,11 @@ class TransactionCategoryRepository with ChangeNotifier {
     }
   }
 
-  Future<void> deleteTransactionCategory(int categoryId) async {
+  Future<void> deleteTransactionCategory(int categoryId,
+      {nullCategory = false}) async {
     try {
-      await _localDataService.deleteTransactionCategory(categoryId);
+      await _localDataService.deleteTransactionCategory(categoryId,
+          nullCategory: nullCategory);
       notifyListeners();
     } catch (e) {
       rethrow;

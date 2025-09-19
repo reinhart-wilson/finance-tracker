@@ -43,6 +43,7 @@ List<SingleChildWidget> buildProviders() {
             categoryRepository: context.read<TransactionCategoryRepository>())),
     ChangeNotifierProvider<TransactionCategoryViewmodel>(
         create: (context) => TransactionCategoryViewmodel(
+            txRepository: context.read<TransactionRepository>(),
             accountRepository: context.read<AccountRepository>(),
             categoryRepository: context.read<TransactionCategoryRepository>())),
   ];

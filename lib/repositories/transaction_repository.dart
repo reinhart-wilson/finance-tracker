@@ -122,4 +122,15 @@ class TransactionRepository with ChangeNotifier {
       rethrow;
     }
   }
+
+  Future<void> changeTransactionCategory(
+      int oldCategoryId, int newCategoryId) async {
+    final result = await _localDataService
+        .changeTransactionCategoryByCategoryId(oldCategoryId, newCategoryId);
+    if (result < 1) {
+      throw Exception('No change was made');
+    } else {
+      notifyListeners();
+    }
+  }
 }

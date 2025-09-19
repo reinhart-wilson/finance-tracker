@@ -3,6 +3,8 @@ import 'package:finance_tracker/models/transaction/transaction_category.dart';
 import 'package:finance_tracker/themes/app_sizes.dart';
 import 'package:finance_tracker/viewmodels/transaction/transaction_category_viewmodel.dart';
 import 'package:finance_tracker/views/widgets/transaction_category/transaction_category_form.dart';
+import 'package:finance_tracker/views/widgets/transaction_category/transaction_category_migrate_dialog.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -29,20 +31,17 @@ class TransactionCategoryManagementState
               );
             }),
         appBar: AppBar(),
-        body: Expanded(
-          child:
-              Selector<TransactionCategoryViewmodel, List<TransactionCategory>>(
-            selector: (_, vm) => vm.categories,
-            builder: (context, categories, _) {
-              if (categories.isEmpty) return const Text('No categories found.');
-              return ListView.builder(
-                itemCount: categories.length,
-                itemBuilder: (context, index) {
-                  return _CategoryItem(category: categories[index]);
-                },
-              );
-            },
-          ),
+        body: Selector<TransactionCategoryViewmodel, List<TransactionCategory>>(
+          selector: (_, vm) => vm.categories,
+          builder: (context, categories, _) {
+            if (categories.isEmpty) return const Text('No categories found.');
+            return ListView.builder(
+              itemCount: categories.length,
+              itemBuilder: (context, index) {
+                return _CategoryItem(category: categories[index]);
+              },
+            );
+          },
         ));
   }
 }
@@ -94,11 +93,16 @@ class _CategoryItem extends StatelessWidget {
   }
 }
 
-class _CategoryOptions extends StatelessWidget {
+class _CategoryOptions extends StatefulWidget {
   final TransactionCategory category;
 
   const _CategoryOptions({required this.category});
 
+  @override
+  State<_CategoryOptions> createState() => _CategoryOptionsState();
+}
+
+class _CategoryOptionsState extends State<_CategoryOptions> {
   @override
   Widget build(BuildContext context) {
     final vm = context.read<TransactionCategoryViewmodel>();
@@ -114,7 +118,8 @@ class _CategoryOptions extends StatelessWidget {
               context: context,
               isScrollControlled: true,
               backgroundColor: Colors.transparent,
-              builder: (_) => TransactionCategoryForm(category: category),
+              builder: (_) =>
+                  TransactionCategoryForm(category: widget.category),
             );
           },
         ),
@@ -122,7 +127,72 @@ class _CategoryOptions extends StatelessWidget {
           leading: const Icon(Icons.delete),
           title: const Text('Delete'),
           onTap: () async {
-            Navigator.pop(context);
+            final categoryId = widget.category.id!;
+            bool isMigrate = false;
+
+            // 1) Ask for delete confirmation
+            final isDeleteConfirmed = await showDialog<bool>(
+              context: context,
+              builder: (context) {
+                return _DeleteConfirmationDialog(
+                  category: widget.category,
+                  value: isMigrate,
+                  onMigrateChanged: (value) {
+                    isMigrate = value ?? isMigrate;
+                  },
+                );
+              },
+            );
+
+            // If user canceled or didn't confirm deletion -> stop.
+            if (isDeleteConfirmed != true) return;
+
+            // 2) If migrate chosen, show migration target dialog (cancelable).
+            if (isMigrate) {
+              final TransactionCategory? target =
+                  await showDialog<TransactionCategory?>(
+                context: context,
+                builder: (_) {
+                  return TransactionCategoryMigrateDialog(
+                    categoryList: vm.categories,
+                    previousCategory: widget.category,
+                  );
+                },
+              );
+
+              // If user cancelled the migration dialog, abort deletion.
+              if (target == null) return;
+
+              // Try to migrate before deleting.
+              try {
+                await vm.migrateCategory(categoryId, target.id!);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text('Migration failed: ${e.toString()}')),
+                  );
+                }
+                return;
+              }
+            }
+
+            // 3) Proceed with deletion. nullCategory should be true when NOT migrating.
+            var message = 'Successfully deleted ${widget.category.name}.';
+            try {
+              await vm.deleteCategory(widget.category,
+                  nullCategory: !isMigrate);
+            } catch (e) {
+              message =
+                  'Failed to delete ${widget.category.name}: ${e.toString()}';
+                  debugPrintStack();
+            } finally {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(message)),
+                );
+              }
+            }
           },
         ),
       ],
@@ -130,3 +200,75 @@ class _CategoryOptions extends StatelessWidget {
   }
 }
 
+class _DeleteConfirmationDialog extends StatefulWidget {
+  final TransactionCategory category;
+  final void Function(bool?) onMigrateChanged;
+  final bool value;
+
+  const _DeleteConfirmationDialog(
+      {required this.category,
+      required this.onMigrateChanged,
+      required this.value});
+
+  @override
+  State<_DeleteConfirmationDialog> createState() =>
+      _DeleteConfirmationDialogState();
+}
+
+class _DeleteConfirmationDialogState extends State<_DeleteConfirmationDialog> {
+  late bool _isMigrate;
+
+  @override
+  void initState() {
+    super.initState();
+    _isMigrate = widget.value;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Confirm Deletion'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text.rich(
+            TextSpan(
+              text: 'Are you sure you want to delete transaction ',
+              style: const TextStyle(color: Colors.black),
+              children: [
+                TextSpan(
+                  text: widget.category.name,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const TextSpan(text: '?'),
+              ],
+            ),
+          ),
+          Builder(builder: (context) {
+            return CheckboxListTile(
+              controlAffinity: ListTileControlAffinity.leading,
+              value: _isMigrate,
+              onChanged: (value) {
+                setState(() {
+                  _isMigrate = value ?? _isMigrate;
+                  widget.onMigrateChanged(value);
+                });
+              },
+              title: const Text('Migrate associated transactions'),
+            );
+          }),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('No'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Yes'),
+        ),
+      ],
+    );
+  }
+}

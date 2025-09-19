@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:finance_tracker/models/tables/transaction_categories_table.dart';
+import 'package:finance_tracker/models/tables/transactions_table.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -38,29 +39,10 @@ class LocalDataService {
       ''');
 
         // Create transaction type table
-        await db.execute('''
-        CREATE TABLE transaction_categories(
-          id INTEGER PRIMARY KEY,
-          name TEXT NOT NULL,
-          icon TEXT,
-          color TEXT,
-          default_account_id INTEGER
-        );
-      ''');
+        await db.execute(TransactionCategoriesTable.toSql());
 
         // Create transactions table
-        await db.execute('''
-        CREATE TABLE transactions(
-          id INTEGER PRIMARY KEY,
-          title TEXT NOT NULL,
-          amount REAL NOT NULL,
-          date TEXT NOT NULL,
-          due_date TEXT ,
-          settled_date TEXT,
-          account_id INTEGER NOT NULL,
-          transaction_category_id INTEGER 
-        );
-      ''');
+        await db.execute(TransactionsTable.toSql());
       },
     );
   }
@@ -554,6 +536,38 @@ class LocalDataService {
       rethrow;
     }
   }
+
+  Future<int> changeTransactionCategoryByCategoryId(
+      int oldCategoryId, int newCategoryId) async {
+    final db = await database;
+
+    final result = await db.rawUpdate('''
+        UPDATE ${TransactionsTable.tableName}
+        SET ${TransactionsTable.columnTransactionCategoryId} = ?
+        WHERE ${TransactionsTable.columnTransactionCategoryId} = ?
+    ''', [newCategoryId, oldCategoryId]);
+
+    return result;
+  }
+
+  Future<int> changeTransactionCategoryByTxIds(
+      List<int> txIds, int newCategoryId) async {
+    if (txIds.isEmpty) return 0;
+
+    final db = await database;
+
+    // Create a comma-separated list of '?' placeholders for the IN clause
+    final placeholders = List.filled(txIds.length, '?').join(',');
+
+    final result = await db.rawUpdate('''
+    UPDATE ${TransactionsTable.tableName}
+    SET ${TransactionsTable.columnTransactionCategoryId} = ?
+    WHERE ${TransactionsTable.columnId} IN ($placeholders)
+  ''', [newCategoryId, ...txIds]);
+
+    return result; // Returns the number of rows affected
+  }
+
   // ===========================================================================
   // Transaction Category-Related Methods
   // ===========================================================================
@@ -583,25 +597,28 @@ class LocalDataService {
 
   /// Deletes a transaction category, and updates the associated transactions'
   /// category id to null
-  Future<void> deleteTransactionCategory(int categoryId) async {
+  Future<void> deleteTransactionCategory(int categoryId,
+      {nullCategory = false}) async {
     final db = await database;
 
     db.transaction((txn) async {
       /// Step 1: Set category id from transaction table
-      await txn.update(
-        'transactions',
-        {'category_id': null}, // set null
-        where: 'category_id = ?',
-        whereArgs: [categoryId],
-      );
+      if (nullCategory) {
+        await txn.update(
+          TransactionsTable.tableName,
+          {TransactionsTable.columnTransactionCategoryId: null}, // set null
+          where: '${TransactionsTable.columnTransactionCategoryId} = ?',
+          whereArgs: [categoryId],
+        );
+      }
 
       /// Step 2: Delete corresponding categories
       final response = await txn.delete(
-        'transaction_categories',
-        where: 'id = ?',
+        TransactionCategoriesTable.tableName,
+        where: '${TransactionCategoriesTable.columnId} = ?',
         whereArgs: [categoryId],
       );
-      if (response < 0) throw Exception("Failed to delete transaction");
+      if (response < 0) throw Exception("Failed to delete category");
     });
   }
 
