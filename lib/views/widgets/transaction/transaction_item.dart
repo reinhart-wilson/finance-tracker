@@ -116,7 +116,7 @@ class TransactionItemTile extends StatelessWidget {
                 if (!isSettled)
                   const Icon(Icons.schedule, size: 14, color: Colors.orange),
                 Text(
-                  ' ${formatDate(isSettled ? transaction.date : transaction.dueDate!)}',
+                  ' ${formatDate(transaction.settledDate ?? transaction.dueDate!)}',
                   style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
               ],
