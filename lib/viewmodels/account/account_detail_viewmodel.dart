@@ -3,6 +3,7 @@ import 'package:finance_tracker/models/transaction/transaction.dart';
 import 'package:finance_tracker/models/transaction/transaction_filter.dart';
 import 'package:finance_tracker/repositories/account_repository.dart';
 import 'package:finance_tracker/repositories/transaction_repository.dart';
+import 'package:finance_tracker/utils/date_calculator.dart';
 import 'package:flutter/foundation.dart';
 
 class AccountDetailViewmodel extends ChangeNotifier {
@@ -53,8 +54,8 @@ class AccountDetailViewmodel extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     final now = DateTime.now();
-    _dueEndDate = _settledEndDate = DateTime(now.year, now.month + 1, 0);
-    _settledStartDate = DateTime(now.year, now.month, 1);
+    _dueEndDate = _settledEndDate = getLastDateOfMonth();
+    _settledStartDate = getFirstDateOfMonth();
     try {
       _parentAccount = (parentAccount);
       await _loadSettledTransactions(

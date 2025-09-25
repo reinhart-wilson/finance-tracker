@@ -1,4 +1,5 @@
 import 'package:finance_tracker/models/account.dart';
+import 'package:finance_tracker/utils/date_calculator.dart';
 import 'package:finance_tracker/viewmodels/view_models.dart';
 import 'package:finance_tracker/views/widgets/account/account_overview_card.dart';
 import 'package:finance_tracker/views/widgets/account/account_transaction_section.dart';
@@ -67,8 +68,8 @@ class _AccountDetailContentState extends State<_AccountDetailContent> {
     super.initState();
 
     final now = DateTime.now();
-    _dueEndDate = DateTime(now.year, now.month + 1, 0, 23, 59, 59, 999);
-    _settledStartDate = DateTime(now.year, now.month, 1);
+    _dueEndDate = getLastDateOfMonth();
+    _settledStartDate = getLastDateOfMonth();
     _settledEndDate = now;
   }
 

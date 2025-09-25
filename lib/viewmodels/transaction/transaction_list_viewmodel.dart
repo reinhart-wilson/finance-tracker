@@ -3,6 +3,7 @@ import 'package:finance_tracker/models/transaction/transaction.dart';
 import 'package:finance_tracker/models/transaction/transaction_category.dart';
 import 'package:finance_tracker/models/transaction/transaction_filter.dart';
 import 'package:finance_tracker/repositories/repositories.dart';
+import 'package:finance_tracker/utils/date_calculator.dart';
 import 'package:flutter/foundation.dart';
 
 class TransactionListViewmodel extends ChangeNotifier {
@@ -17,9 +18,8 @@ class TransactionListViewmodel extends ChangeNotifier {
     // By default loads all transactions settled in the current month or
     // still due up to current month.
     final now = DateTime.now();
-    final firstDayOfMonth = DateTime(now.year, now.month - 1, 1);
-    final lastDayOfMonth =
-        DateTime(now.year, now.month + 1, 0, 23, 59, 59, 999);
+    final firstDayOfMonth = getFirstDateOfMonth();
+    final lastDayOfMonth = getLastDateOfMonth();
     _filter = TransactionFilter(
         startDate: firstDayOfMonth,
         endDate: lastDayOfMonth,

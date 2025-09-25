@@ -2,6 +2,7 @@ import 'package:finance_tracker/models/account.dart';
 import 'package:finance_tracker/models/mappers/account_mapper.dart';
 import 'package:finance_tracker/repositories/account_repository.dart';
 import 'package:finance_tracker/repositories/repositories.dart';
+import 'package:finance_tracker/utils/date_calculator.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -74,10 +75,8 @@ class AccountListViewmodel extends ChangeNotifier {
     notifyListeners();
     _accountList = await _accountRepository.getAllAccounts();
     _accountList.sort((a, b) => a.name.compareTo(b.name));
-    final now = DateTime.now();
     await _loadUnsettledTransactionsSum(
-        startDate: DateTime(now.year, now.month, 1),
-        endDate: DateTime(now.year, now.month + 1, 0, 23, 59, 59, 999));
+        startDate: getFirstDateOfMonth(), endDate: getLastDateOfMonth());
     _isLoading = false;
     notifyListeners();
   }
@@ -125,13 +124,8 @@ class AccountListViewmodel extends ChangeNotifier {
     try {
       _isLoading = true;
       notifyListeners();
-      final now = DateTime.now();
-      final startDate = DateTime(
-        now.year,
-        now.month,
-        1,
-      );
-      final endDate = DateTime(now.year, now.month + 1, 0, 23, 59, 59, 999);
+      final startDate = getFirstDateOfMonth();
+      final endDate = getLastDateOfMonth();
       _unsettledSum = await _txnRepository.getUnsettledTransactionsSum(
           startDate: startDate, endDate: endDate);
     } catch (e) {
@@ -147,13 +141,8 @@ class AccountListViewmodel extends ChangeNotifier {
     try {
       _isLoading = true;
       notifyListeners();
-      final now = DateTime.now();
-      final startLastMonth = DateTime(
-        now.year,
-        now.month - 1,
-        1,
-      );
-      final endLastMonth = DateTime(now.year, now.month, 0, 23, 59, 59, 999);
+      final startLastMonth = getFirstDateOfMonth();
+      final endLastMonth = getLastDateOfMonth();
       final lastMonthSum = await _txnRepository.getSettledTransactionsSum(
           startDate: startLastMonth, endDate: endLastMonth);
       if (lastMonthSum == 0) {

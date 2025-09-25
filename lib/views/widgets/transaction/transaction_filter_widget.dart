@@ -2,6 +2,7 @@ import 'package:finance_tracker/models/account.dart';
 import 'package:finance_tracker/models/transaction/transaction_category.dart';
 import 'package:finance_tracker/models/transaction/transaction_filter.dart';
 import 'package:finance_tracker/themes/app_sizes.dart';
+import 'package:finance_tracker/utils/date_calculator.dart';
 import 'package:finance_tracker/viewmodels/transaction/transaction_list_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -36,9 +37,8 @@ class TransactionFilterWidgetState extends State<TransactionFilterWidget> {
     _selectedAccounts = filter.accounts ?? [];
     _selectedCategories = filter.categories ?? [];
     now = DateTime.now();
-    _startDate = DateTime(now.year, now.month, 1);
-    _endDate =
-        DateTime(now.year, now.month + 1, 1).subtract(const Duration(days: 1));
+    _startDate = getFirstDateOfMonth();
+    _endDate = getLastDateOfMonth();
     _startDate = filter.startDate ?? _startDate;
     _endDate = filter.endDate ?? _endDate;
     _includePastDue = filter.loadPreviouslyUnsettled ? true : false;
