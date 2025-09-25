@@ -131,7 +131,7 @@ class AccountListViewmodel extends ChangeNotifier {
         now.month,
         1,
       );
-      final endDate = DateTime(now.year, now.month + 1, 0, 23, 59, 999);
+      final endDate = DateTime(now.year, now.month + 1, 0, 23, 59, 59, 999);
       _unsettledSum = await _txnRepository.getUnsettledTransactionsSum(
           startDate: startDate, endDate: endDate);
     } catch (e) {
@@ -153,7 +153,7 @@ class AccountListViewmodel extends ChangeNotifier {
         now.month - 1,
         1,
       );
-      final endLastMonth = DateTime(now.year, now.month, 0, 23, 59, 999);
+      final endLastMonth = DateTime(now.year, now.month, 0, 23, 59, 59, 999);
       final lastMonthSum = await _txnRepository.getSettledTransactionsSum(
           startDate: startLastMonth, endDate: endLastMonth);
       if (lastMonthSum == 0) {
