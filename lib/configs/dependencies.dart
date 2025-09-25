@@ -1,5 +1,6 @@
 import 'package:finance_tracker/repositories/repositories.dart';
 import 'package:finance_tracker/services/local_data_service.dart';
+import 'package:finance_tracker/viewmodels/options/options_viewmodel.dart';
 import 'package:finance_tracker/viewmodels/transaction/transaction_category_viewmodel.dart';
 import 'package:finance_tracker/viewmodels/view_models.dart';
 import 'package:provider/provider.dart';
@@ -46,5 +47,8 @@ List<SingleChildWidget> buildProviders() {
             txRepository: context.read<TransactionRepository>(),
             accountRepository: context.read<AccountRepository>(),
             categoryRepository: context.read<TransactionCategoryRepository>())),
+    Provider<OptionsViewmodel>(
+      create: (context) => OptionsViewmodel(localDataService),
+    )
   ];
 }

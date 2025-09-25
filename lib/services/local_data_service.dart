@@ -1,15 +1,19 @@
 import 'dart:async';
+import 'package:finance_tracker/models/tables/accounts.dart';
 import 'package:finance_tracker/models/tables/transaction_categories_table.dart';
 import 'package:finance_tracker/models/tables/transactions_table.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'dart:convert';
+import 'dart:io';
 
 class LocalDataService {
   // Singleton pattern
   static final LocalDataService _instance = LocalDataService._internal();
   factory LocalDataService() => _instance;
-
   LocalDataService._internal();
+
+  static const dbFileName = 'finance_tracker.db';
 
   Database? _database;
 
@@ -21,7 +25,7 @@ class LocalDataService {
   }
 
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'finance_tracker.db');
+    String path = join(await getDatabasesPath(), dbFileName);
     return await openDatabase(
       path,
       version: 1,
@@ -29,14 +33,7 @@ class LocalDataService {
         // TODO: add FK Constraints
 
         // Create accounts table first (parent table)
-        await db.execute('''
-        CREATE TABLE accounts(
-          id INTEGER PRIMARY KEY,
-          name TEXT NOT NULL,
-          balance REAL NOT NULL,
-          parent_id INTEGER
-        );
-      ''');
+        await db.execute(AccountsTable.toSql());
 
         // Create transaction type table
         await db.execute(TransactionCategoriesTable.toSql());
@@ -45,6 +42,82 @@ class LocalDataService {
         await db.execute(TransactionsTable.toSql());
       },
     );
+  }
+
+  Future<String> convertTableToJson() async {
+    // Path is passed from UI - VM - Repository
+    final db = await database;
+
+    // Collects data from table and converts it to json
+    Map<String, dynamic> exportData = {
+      'version': 1,
+      'tables': {
+        AccountsTable.tableName: await db.query(AccountsTable.tableName),
+        TransactionsTable.tableName:
+            await db.query(TransactionsTable.tableName),
+        TransactionCategoriesTable.tableName:
+            await db.query(TransactionCategoriesTable.tableName),
+      }
+    };
+    String jsonString = jsonEncode(exportData);
+
+    return jsonString;
+  }
+
+  Future<void> importTableFromJson(String jsonString) async {
+    final db = await database;
+
+    try {
+      final Map<String, dynamic> decoded = jsonDecode(jsonString);
+
+      // Validate JSON structure
+      if (!decoded.containsKey('version') || !decoded.containsKey('tables')) {
+        throw const FormatException(
+            'Invalid backup format: Missing version or tables.');
+      }
+      final tables = decoded['tables'];
+      if (tables is! Map<String, dynamic>) {
+        throw const FormatException('Invalid format: tables should be a map.');
+      }
+
+      // Required table names
+      const requiredTables = [
+        AccountsTable.tableName,
+        TransactionsTable.tableName,
+        TransactionCategoriesTable.tableName,
+      ];
+
+      for (var tableName in requiredTables) {
+        if (!tables.containsKey(tableName)) {
+          throw FormatException('Missing table in backup: $tableName');
+        }
+
+        if (tables[tableName] is! List) {
+          throw FormatException('Invalid data for table: $tableName');
+        }
+      }
+
+      // Start import transaction
+      await db.transaction((txn) async {
+        for (var tableName in requiredTables) {
+          final List<dynamic> rows = tables[tableName];
+
+          // Optional: Clear the existing table
+          await txn.delete(tableName);
+
+          // Re-insert rows
+          for (var row in rows) {
+            if (row is Map<String, dynamic>) {
+              await txn.insert(tableName, row);
+            } else {
+              throw FormatException('Row data for $tableName is invalid.');
+            }
+          }
+        }
+      });
+    } catch (e) {
+      throw Exception('Import failed: ${e.toString()}');
+    }
   }
 
   // ===========================================================================
