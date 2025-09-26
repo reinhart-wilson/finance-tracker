@@ -13,6 +13,7 @@ The app demonstrates key Flutter concepts such as:
 - Exporting and importing data with json file.
 
 ## Tech stack
-- Flutter & Dart
+- Flutter 3.24.5
+- Dart 3.5.4
 - `provider`
 - `sqflite`
