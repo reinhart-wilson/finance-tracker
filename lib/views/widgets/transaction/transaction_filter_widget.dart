@@ -113,7 +113,7 @@ class TransactionFilterWidgetState extends State<TransactionFilterWidget> {
                     onDatePicked: (date) {
                       _startDate = date != null
                           ? DateTime(
-                              date.year, date.month, date.day, 23, 59, 59, 999)
+                              date.year, date.month, date.day)
                           : _startDate;
                     });
               },

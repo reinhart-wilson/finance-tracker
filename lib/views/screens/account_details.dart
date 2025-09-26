@@ -69,7 +69,7 @@ class _AccountDetailContentState extends State<_AccountDetailContent> {
 
     final now = DateTime.now();
     _dueEndDate = getLastDateOfMonth();
-    _settledStartDate = getLastDateOfMonth();
+    _settledStartDate = getFirstDateOfMonth();
     _settledEndDate = now;
   }
 
