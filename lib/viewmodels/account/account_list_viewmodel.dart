@@ -141,8 +141,13 @@ class AccountListViewmodel extends ChangeNotifier {
     try {
       _isLoading = true;
       notifyListeners();
-      final startLastMonth = getFirstDateOfMonth();
-      final endLastMonth = getLastDateOfMonth();
+      final now = DateTime.now();
+      final startLastMonth = DateTime(
+        now.year,
+        now.month - 1,
+        1,
+      );
+      final endLastMonth = DateTime(now.year, now.month, 0, 23, 59, 59, 999);
       final lastMonthSum = await _txnRepository.getSettledTransactionsSum(
           startDate: startLastMonth, endDate: endLastMonth);
       if (lastMonthSum == 0) {
