@@ -1,16 +1,18 @@
 # finance_tracker
 
-A new Flutter project.
+This app is a personal finance tracking app built with Flutter as a personal learning exercise to explore Flutter development and state management using the `provider` package. It is built with my personal needs in mind, but does not necessarily mean it can't be used by other users.
 
-## Getting Started
+The app demonstrates key Flutter concepts such as:
+- Managing state with ChangeNotifier and Provider.
+- Persisting data with local SQLite database.
 
-This project is a starting point for a Flutter application.
+## Features
+- Account management with child accounts mainly for budgeting purposes.
+- Filtering transactions by date ranges and conditions.
+- Projecting future balance, taking unsettled transactions into calculations.
+- Exporting and importing data with json file.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Tech stack
+- Flutter & Dart
+- `provider`
+- `sqflite`
