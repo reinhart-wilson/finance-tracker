@@ -85,7 +85,10 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
                             text: TextSpan(
                               text:
                                   '${formatCurrency(widget.parentAccount.balance)} ',
-                              style: theme.textTheme.bodySmall,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                  color: widget.parentAccount.balance < 0
+                                      ? Colors.red
+                                      : null),
                               children: [
                                 if (unsettled != 0)
                                   TextSpan(
@@ -122,10 +125,9 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
           // Divider between parent and children
           if (_expanded && widget.childAccounts.isNotEmpty)
             const Padding(
-              padding: EdgeInsets.symmetric(
-                  horizontal: AppSizes.paddingMedium),
-              child: Divider(
-                  height: 1, color: Color.fromARGB(255, 240, 228, 255)),
+              padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
+              child:
+                  Divider(height: 1, color: Color.fromARGB(255, 240, 228, 255)),
             ),
 
           // Expanded children
@@ -160,7 +162,10 @@ class _ParentAccountCardState extends State<ParentAccountCard> {
                               RichText(
                                 text: TextSpan(
                                     text: '${formatCurrency(child.balance)} ',
-                                    style: theme.textTheme.bodySmall,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                        color: child.balance < 0
+                                            ? Colors.red
+                                            : null),
                                     children: [
                                       if (childUnsettled != null &&
                                           childUnsettled != 0)
